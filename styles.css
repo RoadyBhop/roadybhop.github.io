@@ -1,0 +1,28 @@
+body {
+	margin: 0;
+	background-color: #000000;
+	text-align: center;
+	color: white;
+}
+.container {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	flex-basis: 48%;
+}
+
+.image {
+	width: 100%;
+	height: auto;
+}
+
+.description {
+	text-align: center;
+	margin-top: 10px;
+}
+.back a {
+	color: inherit;
+	text-decoration: none;
+}
