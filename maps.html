@@ -1,11 +1,30 @@
 <html lang="en">
     <link rel="stylesheet" href="styles.css">
     <div class="topnav">
-        <a href="/index.html">Home</a><a href="maps.html">Maps</a><a href="contact.html">Contact</a><a class="last" href="about.html">About</a>
+        <a href="/home.html">Home</a><a href="maps.html">Maps</a><a href="contact.html">Contact</a><a class="last" href="about.html">About</a>
       </div>
 <head class="maps">
     <title>RoadyMaps</title>
 </head>
+<script>
+    var i=0;
+    function changeImage(){
+        p=i;
+        i++;
+        var list = ["images/2shinyimage1.jpg","images/2shinyimage2.jpg","images/2shinyimage3.jpg","images/2shinyimage4.jpg","images/2shinyimage5.jpg"];
+        var list2 = ["images/frigpximage1.jpg","images/frigpximage2.jpg","images/frigpximage3.jpg","images/frigpximage4.jpg","images/frigpximage5.jpg"];
+        var list3 = ["images/floodwatersimage1.jpg","images/floodwatersimage2.jpg","images/floodwatersimage3.jpg","images/floodwatersimage4.jpg","images/floodwatersimage5.jpg"];
+        var list4 = ["images/offstylesimage1.jpg","images/offstylesimage2.jpg","images/offstylesimage3.jpg","images/offstylesimage4.jpg","images/offstylesimage5.jpg"];
+        var list5 = ["images/flythingimage1.jpg","images/flythingimage2.jpg","images/flythingimage3.jpg","images/flythingimage4.jpg","images/flythingimage5.jpg"];
+        document.getElementById('imageid1').src=list[i];
+        document.getElementById('imageid2').src=list2[i];
+        document.getElementById('imageid3').src=list3[i];
+        document.getElementById('imageid4').src=list4[i];
+        document.getElementById('imageid5').src=list5[i];
+        if (i==list.length-1){i=0;}
+        };
+    window.onload = function () {setInterval(changeImage, 5000)};
+  </script>
 <body>
     <h1>My Maps</h1>
     <h2>Momentum Mod Maps</h2>
@@ -13,7 +32,7 @@
         <div class="column">
             <div class="description">
                 <a>
-                    <img class="image" src="images/2shinyimage1.jpg" alt="Image 1">
+                   <img class="image" src="images/2shinyimage1.jpg" alt="Image 1" id="imageid1">
                 </a>
                 <h3>bhop_2shiny2shuckle</h3>
                 <p>Are you ready to put your mathematical prowess, strategic mind, and quick reflexes to the test? Gear up to enter the captivating world of Shuckle Labs where you'll encounter seven thrilling stages that will challenge your intellect and entertain your senses. But don't worry, if you ever find yourself stumped, there are plenty of helpful hints available to assist you on your journey to becoming a master of Shuckle Labs. So what are you waiting for? Let the adventure begin!</p>
@@ -24,7 +43,7 @@
         <div class="column">
             <div class="description">
                 <a>
-                    <img class="image" src="images/frigpximage1.jpg" alt="Image 2">
+                    <img class="image" src="images/frigpximage1.jpg" alt="Image 2" id="imageid2">
                 </a>
                 <h3>bhop_frigpx</h3>
                 <p>6 stages on the inside of a cube ;)</p>
@@ -38,7 +57,7 @@
 
             <div class="description">
                 <a>
-                    <img class="image" src="images/floodwatersimage1.jpg" alt="Image 1">
+                    <img class="image" src="images/floodwatersimage1.jpg" alt="Image 1" id="imageid3">
                 </a>
                 <h3>bhop_floodwaters</h3>
                 <p>~30 seconds with mega speedy boosts</p>
@@ -49,7 +68,7 @@
         <div class="column">
             <div class="description">
                 <a>
-                    <img class="image" src="images/offstylesimage1.jpg" alt="Image 2">
+                    <img class="image" src="images/offstylesimage1.jpg" alt="Image 2" id="imageid4">
                 </a>
                 <h3>bhop_offstyles</h3>
                 <p>Shoutout to the offstyles community</p>
@@ -62,11 +81,13 @@
         <div class="column">
             <div class="description">
                 <a>
-                    <img class="image" src="images/flythingimage1.jpg" alt="Image 1">
+                    <img class="image" src="images/flythingimage1.jpg" alt="Image 1" id="imageid5">
                 </a>
                 <h3>bhop_flything</h3>
                 <p>Half bhop half fly map experimenting with momentum entities :)</p>
                 <p>Release Date: 08/02/2022</p>
+                <a href="https://www.youtube.com/watch?v=RsQ7j4q9Lj8">Showcase</a>
+                <p style="display: inline;">|</p>
                 <a href="https://momentum-mod.org/dashboard/maps/130">Download</a>
             </div>
         </div>

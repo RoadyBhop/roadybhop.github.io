@@ -8,6 +8,7 @@ body {
 	background-repeat: no-repeat;
 }
 .container {
+	position: static;
 	display: flex;
 	justify-content: space-between;
 	margin-left: 2%;
