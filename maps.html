@@ -8,35 +8,41 @@
 </head>
 <script>
     var i=0;
-    var list = ["images/2shinyimage1.jpg","images/2shinyimage2.jpg","images/2shinyimage3.jpg","images/2shinyimage4.jpg","images/2shinyimage5.jpg"];
-    var list2 = ["images/frigpximage1.jpg","images/frigpximage2.jpg","images/frigpximage3.jpg","images/frigpximage4.jpg","images/frigpximage5.jpg"];
-    var list3 = ["images/floodwatersimage1.jpg","images/floodwatersimage2.jpg","images/floodwatersimage3.jpg","images/floodwatersimage4.jpg","images/floodwatersimage5.jpg"];
-    var list4 = ["images/offstylesimage1.jpg","images/offstylesimage2.jpg","images/offstylesimage3.jpg","images/offstylesimage4.jpg","images/offstylesimage5.jpg"];
-    var list5 = ["images/flythingimage1.jpg","images/flythingimage2.jpg","images/flythingimage3.jpg","images/flythingimage4.jpg","images/flythingimage5.jpg"];
+    var list = []
+    var imageid = ""
+    var _2shinylist = ["images/2shinyimage1.jpg","images/2shinyimage2.jpg","images/2shinyimage3.jpg","images/2shinyimage4.jpg","images/2shinyimage5.jpg"];
+    var frigpxlist = ["images/frigpximage1.jpg","images/frigpximage2.jpg","images/frigpximage3.jpg","images/frigpximage4.jpg","images/frigpximage5.jpg"];
+    var floodwaterslist = ["images/floodwatersimage1.jpg","images/floodwatersimage2.jpg","images/floodwatersimage3.jpg","images/floodwatersimage4.jpg","images/floodwatersimage5.jpg"];
+    var offstyleslist = ["images/offstylesimage1.jpg","images/offstylesimage2.jpg","images/offstylesimage3.jpg","images/offstylesimage4.jpg","images/offstylesimage5.jpg"];
+    var flythinglist = ["images/flythingimage1.jpg","images/flythingimage2.jpg","images/flythingimage3.jpg","images/flythingimage4.jpg","images/flythingimage5.jpg"];
     function changeImage(imageNum, direction){
-        if(direction==1){i++;};
-        if(direction==-1){i--;};
-        if(i==-1){i=4};
-        let x = list.length;
-        if (i==5){i=0;};
-        console.log(x);
         switch(imageNum){
             case "2shiny":
-                document.getElementById('imageid1').src=list[i];
+                imageid='2shinyid'
+                list = _2shinylist
                 break;
             case "frigpx":
-                document.getElementById('imageid2').src=list2[i];
+                imageid='frigpxid'
+                list = frigpxlist
                 break;
             case "floodwaters":
-                document.getElementById('imageid3').src=list3[i];
+                imageid='floodwatersid'
+                list = floodwaterslist
                 break;
             case "offstyles":
-                document.getElementById('imageid4').src=list4[i];
+                imageid='offstylesid'
+                list = offstyleslist
                 break;
             case "flything":
-                document.getElementById('imageid5').src=list5[i];
+                imageid='flythingid'
+                list = flythinglist
                 break;
             }
+        if(direction==1){i++;};
+        if(direction==-1){i--;};
+        if(i==-1){i=list.length-1};
+        if (i==list.length){i=0;};
+            document.getElementById(imageid).src=list[i];
         };
   </script>
 <body>
@@ -47,7 +53,7 @@
             <div class="description" >
                 <div style= "position: relative;">
                     <a>
-                        <img class="image" src="images/2shinyimage1.jpg" alt="Image 1" id="imageid1">
+                        <img class="image" src="images/2shinyimage1.jpg" alt="Image 1" id="2shinyid">
                         <button class="btnright" onclick="changeImage('2shiny',1)">→</button>
                         <button class="btnleft" onclick="changeImage('2shiny',-1)">←</button>
                     </a>
@@ -62,7 +68,7 @@
             <div class="description">
                 <div style= "position: relative;">
                     <a>
-                        <img class="image" src="images/frigpximage1.jpg" alt="Image 2" id="imageid2">
+                        <img class="image" src="images/frigpximage1.jpg" alt="Image 2" id="frigpxid">
                         <button class="btnright" onclick="changeImage('frigpx',1)">→</button>
                         <button class="btnleft" onclick="changeImage('frigpx',-1)">←</button>
                     </a>
@@ -79,7 +85,7 @@
             <div class="description">
                 <div style= "position: relative;">
                 <a>
-                    <img class="image" src="images/floodwatersimage1.jpg" alt="Image 1" id="imageid3">
+                    <img class="image" src="images/floodwatersimage1.jpg" alt="Image 1" id="floodwatersid">
                     <button class="btnright" onclick="changeImage('floodwaters',1)">→</button>
                    <button class="btnleft" onclick="changeImage('floodwaters',-1)">←</button>
                 </a>
@@ -94,7 +100,7 @@
             <div class="description">
                 <div style= "position: relative;">
                 <a>
-                    <img class="image" src="images/offstylesimage1.jpg" alt="Image 2" id="imageid4">
+                    <img class="image" src="images/offstylesimage1.jpg" alt="Image 2" id="offstylesid">
                     <button class="btnright" onclick="changeImage('offstyles',1)">→</button>
                    <button class="btnleft" onclick="changeImage('offstyles',-1)">←</button>
                 </a>
@@ -111,7 +117,7 @@
             <div class="description">
                 <div style= "position: relative;">
                 <a>
-                    <img class="image" src="images/flythingimage1.jpg" alt="Image 1" id="imageid5">
+                    <img class="image" src="images/flythingimage1.jpg" alt="Image 1" id="flythingid">
                     <button class="btnright" onclick="changeImage('flything',1)">→</button>
                    <button class="btnleft" onclick="changeImage('flything',-1)">←</button>
                 </a>
