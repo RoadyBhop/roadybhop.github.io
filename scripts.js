@@ -199,29 +199,8 @@ var appanicelist = [
 	'https://images.gamebanana.com/img/ss/mods/5fd289dd49cfa.jpg',
 	'https://images.gamebanana.com/img/ss/mods/5fd289dd4eac8.jpg'
 ];
-var fullList = [];
-fullList = fullList.concat(
-	_2shinylist,
-	frigpxlist,
-	floodwaterslist,
-	offstyleslist,
-	flythinglist,
-	souptop_2023list,
-	_4loshadkalist,
-	relentlesslist,
-	_4matanlist,
-	_4jukedlist,
-	appanice4list,
-	_3muddzlist,
-	_4azzlackzlist,
-	_4pilflist,
-	_4appalist,
-	_4muddzlist,
-	egyptianlist,
-	appanice2list,
-	awtoplist,
-	appanicelist
-);
+var randList = [];
+randList = randList.concat(_2shinylist, frigpxlist, floodwaterslist, offstyleslist, flythinglist);
 function changeImage(imageNum, direction) {
 	switch (imageNum) {
 		case '2shiny':
@@ -342,11 +321,11 @@ function changeImage(imageNum, direction) {
 	current[x] = i;
 }
 function changeBackground() {
-	var randNum = Math.floor(Math.random() * fullList.length);
+	var randNum = Math.floor(Math.random() * randList.length);
 	if (randNum == lastRand) {
 		changeBackground();
 	} else {
-		document.body.style.backgroundImage = 'url(' + fullList[randNum] + ')';
+		document.body.style.backgroundImage = 'url(' + randList[randNum] + ')';
 		lastRand = randNum;
 	}
 }
