@@ -1,374 +1,77 @@
+<!DOCTYPE html>
 <html lang="en">
-    <link rel="stylesheet" href="styles.css">
-    <div class="topnav">
-        <a href="/index.html">Home</a><a href="maps.html">Maps</a><a href="contact.html">Contact</a><a class="last" href="about.html">About</a>
-      </div>
-<head class="maps">
-    <title>RoadyMaps</title>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roady Bhop — Maps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
 </head>
-<script src="scripts.js"></script>
 <body>
-    <h1>My Maps</h1>
-    <h2>Momentum Mod Maps</h2>
-    <div class="container">
-        <div class="column">
-            <div class="description" >
-                <div style= "position: relative;">
-                    <a>
-                        <img class="image" src="images/2shinyimage1.jpg" alt="Image 1" id="2shinyid">
-                        <button class="btnright" onclick="changeImage('2shiny',1)">→</button>
-                        <button class="btnleft" onclick="changeImage('2shiny',-1)">←</button>
-                    </a>
-                </div>
-                <h3>bhop_2shiny2shuckle</h3>
-                <p>Are you ready to put your mathematical prowess, strategic mind, and quick reflexes to the test? Gear up to enter the captivating world of Shuckle Labs where you'll encounter seven thrilling stages that will challenge your intellect and entertain your senses. But don't worry, if you ever find yourself stumped, there are plenty of helpful hints available to assist you on your journey to becoming a master of Shuckle Labs. So what are you waiting for? Let the adventure begin!</p>
-                <p>Release Date: 03/05/2023</p>
-                <a href="https://momentum-mod.org/dashboard/maps/223">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                    <a>
-                        <img class="image" src="images/frigpximage1.jpg" alt="Image 2" id="frigpxid">
-                        <button class="btnright" onclick="changeImage('frigpx',1)">→</button>
-                        <button class="btnleft" onclick="changeImage('frigpx',-1)">←</button>
-                    </a>
-                </div>
-                <h3>bhop_frigpx</h3>
-                <p>6 stages on the inside of a cube ;)</p>
-                <p>Release Date: 18/09/2022</p>
-                <a href="https://momentum-mod.org/dashboard/maps/208">Download</a>
-            </div>
-        </div>
+<div class="liminal-bg"></div>
+<div class="grain"></div>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand"><span class="diamond diamond-float"></span><span class="label">Roady</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="maps.html" class="active">Maps</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <button class="menu-btn" aria-label="Menu"></button>
+  </div>
+  <div class="mobile-menu glass">
+    <a href="index.html">Home</a>
+    <a href="maps.html" class="active">Maps</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</header>
+
+<main class="page-fade pt-nav">
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">// The Archive</span>
+      <h1 class="glow-text">My Maps</h1>
+      <p>A collection of bunny-hop maps built for Momentum Mod and Counter-Strike: Source.</p>
     </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="images/floodwatersimage1.jpg" alt="Image 1" id="floodwatersid">
-                    <button class="btnright" onclick="changeImage('floodwaters',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('floodwaters',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_floodwaters</h3>
-                <p>~30 seconds with mega speedy boosts</p>
-                <p>Release Date: 05/09/2022</p>
-                <a href="https://momentum-mod.org/dashboard/maps/204">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="images/offstylesimage1.jpg" alt="Image 2" id="offstylesid">
-                    <button class="btnright" onclick="changeImage('offstyles',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('offstyles',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_offstyles</h3>
-                <p>Shoutout to the offstyles community</p>
-                <p>Release Date: 10/04/2022</p>
-                <a href="https://momentum-mod.org/dashboard/maps/179">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="images/flythingimage1.jpg" alt="Image 1" id="flythingid">
-                    <button class="btnright" onclick="changeImage('flything',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('flything',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_flything</h3>
-                <p>Half bhop half fly map experimenting with momentum entities :)</p>
-                <p>Release Date: 08/02/2022</p>
-                <a href="https://www.youtube.com/watch?v=RsQ7j4q9Lj8">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://momentum-mod.org/dashboard/maps/130">Download</a>
-            </div>
-        </div>
-    </div>
-    <h2>Counter-Strike: Source Maps</h2>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/530-90_644d5fca24e00.jpg" alt="Image 1" id="souptop_2023id">
-                    <button class="btnright" onclick="changeImage('souptop_2023',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('souptop_2023',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_souptop_2023 Pack</h3>
-                <p>Remaster of my first bhop maps that were all dev texture and some fullbright. contains 10 maps each short likely 20-50 seconds.</p>
-                <p>After I saw Snippsku get record on all of them I figured it was time.</p>
-                <p>Release Date: 29/04/2023</p>
-                <a href="https://youtu.be/SnTj9lh66is">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/440888">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/629738285d57f.jpg" alt="Image 2" id="4loshadkaid">
-                    <button class="btnright" onclick="changeImage('4loshadka',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4loshadka',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4loshadka</h3>
-                <p>hard 1 shot bhop map ~2 min</p>
-                <p>Release Date: 01/06/2022</p>
-                <a href="https://youtu.be/kJBxa7nnwMU">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/381052">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/619fd0e2e5458.jpg" alt="Image 2" id="relentlessid">
-                    <button class="btnright" onclick="changeImage('relentless',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('relentless',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_relentless</h3>
-                <p>1 and a half min map with lots of spins as requested by jolux</p>
-                <p>Release Date: 25/11/2021</p>
-                <a href="https://youtu.be/AD5YD4nplIE">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/338571">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/61585fac7dbba.jpg" alt="Image 1" id="4matanid">
-                    <button class="btnright" onclick="changeImage('4matan',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4matan',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4matan</h3>
-                <p>a very long and hard bhop map. 69 short hard stages each being 1 shot. segment time was 40 min. Uses the full limit of the source engine to make what will hopefully be a high tier map. contains 10 maps each short likely 20-50 seconds.</p>
-                <p>vertexes             65524/65536      786288/786432   (100.0%) VERY FULL!
-                    :)</p>
-                <p>Release Date: 03/10/2021</p>
-                <a href="https://youtu.be/uO3f32RqGTc">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/325367">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/6126ad7edaa30.jpg" alt="Image 2" id="4jukedid">
-                    <button class="btnright" onclick="changeImage('4juked',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4juked',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4juked</h3>
-                <p>90+ second bhop map cuz thats the best lenght. shout out to juked the best south african bhopper.</p>
-                <p>Release Date: 28/08/2021</p>
-                <a href="https://youtu.be/LjgS6MbzIr0">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/316931">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/61216331ea782.jpg" alt="Image 1" id="appanice4id">
-                    <button class="btnright" onclick="changeImage('appanice4',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('appanice4',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_appaisaniceman4</h3>
-                <p>1 min long bhop map made months ago but appa just got around to running the showcase now :pensive:</p>
-                <p>Release Date: 21/08/2021</p>
-                <a href="https://youtu.be/XRmNc5OrpzA">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/315795">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/60d78b0a20627.jpg" alt="Image 2" id="3muddzid">
-                    <button class="btnright" onclick="changeImage('3muddz',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('3muddz',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_3muddz</h3>
-                <p>Muddz keeps asking for harder maps so i hope this is enough. probably possible and probably still too easy for him.
-                    ~1:10 on a good run</p>
-                <p>Release Date: 26/06/2021</p>
-                <a href="https://gamebanana.com/mods/299176">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/60d3fc81ce970.jpg" alt="Image 1" id="4azzlackzid">
-                    <button class="btnright" onclick="changeImage('4azzlackz',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4azzlackz',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4azzlackz</h3>
-                <p>"Road make some bs map climbing with spikes" - azzlackz
-                    ~1:40 long</p>
-                <p>Release Date: 24/06/2021</p>
-                <a href="https://gamebanana.com/mods/298357">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/60afabf9e0bea.jpg" alt="Image 2" id="4pilfid">
-                    <button class="btnright" onclick="changeImage('4pilf',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4pilf',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4pilfkcab</h3>
-                <p>2 minute bhop map with a heavy amount of surf cuz pilfkcab loves surf :pensive:.</p>
-                <p>Release Date: 27/05/2021</p>
-                <a href="https://youtu.be/vuELPbBNJ4g">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/290012">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/6098e2e2b096f.jpg" alt="Image 1" id="4appaid">
-                    <button class="btnright" onclick="changeImage('4appa',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4appa',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4appa</h3>
-                <p>just under 2 min bhop map made for the sourcejump.net mapping contest.</p>
-                <p>thanks to TraZox for the sick texture pack</p>
-                <p>Release Date: 10/05/2021</p>
-                <a href="https://youtu.be/mADmbe4Nf24">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/285012">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/607709f186d82.jpg" alt="Image 2" id="4muddzid">
-                    <button class="btnright" onclick="changeImage('4muddz',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('4muddz',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_4muddz</h3>
-                <p>a long hard map made for the Sourcejump.net 2021 mapping contest.</p>
-                <p>not sure what tier but I did finish the map on segment in 29:57 with ~1400 checkpoints.</p>
-                <p>Thanks to samurai and ta de hack for testing and feedback and thanks to JessicaHops Clubhouse for hosting the map for testing</p>
-                <p>Release Date: 14/04/2021</p>
-                <a href="https://www.youtube.com/watch?v=gxeXvFQJbr8">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/124341">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/601276587a394.jpg" alt="Image 1" id="egyptianid">
-                    <button class="btnright" onclick="changeImage('egyptian',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('egyptian',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_egyptian_ruins</h3>
-                <p>~1 min long map with some beautiful details thanks to FOOL</p>
-                <p>Release Date: 28/01/2021</p>
-                <a href="https://youtu.be/dc9fvZwuwcc">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/124928">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/6011300013006.jpg" alt="Image 2" id="appanice2id">
-                    <button class="btnright" onclick="changeImage('appanice2',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('appanice2',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_appaisaniceman2</h3>
-                <p>1 min bhop map for the one and only appa 2nd best canadian bhopper</p>
-                <p>Release Date: 27/01/2021</p>
-                <a href="https://youtu.be/a_kKnLI1bY4">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/124453">Download</a>
-            </div>
-        </div>
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/60052218243d8.jpg" alt="Image 1" id="awtopid">
-                    <button class="btnright" onclick="changeImage('awtop',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('awtop',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_awtop Pack</h3>
-                <p>11 bhop maps dedicated to the best under 30 second map bhopper in the USA</p>
-                <p>Release Date: 18/01/2021</p>
-                <a href="https://youtu.be/1yOjk_HjFB8">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/124511">Download</a>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="column">
-            <div class="description">
-                <div style= "position: relative;">
-                <a>
-                    <img class="image" src="https://images.gamebanana.com/img/ss/mods/5fd289dc24346.jpg" alt="Image 2" id="appaniceid">
-                    <button class="btnright" onclick="changeImage('appanice',1)">→</button>
-                   <button class="btnleft" onclick="changeImage('appanice',-1)">←</button>
-                </a>
-            </div>
-                <h3>bhop_appaisaniceman_extended</h3>
-                <p>~2:40 map not very challenging</p>
-                <p>Release Date: 10/12/2020</p>
-                <a href="https://youtu.be/kYfimYgxdJY">Showcase</a>
-                <p style="display: inline;">|</p>
-                <a href="https://gamebanana.com/mods/124455">Download</a>
-            </div>
-        </div>
-    </div>
-    <h3>The rest of my maps can be found on my <a href="https://gamebanana.com/members/1731881">GameBanana</href></h3>
+
+    <section class="collection">
+      <div class="collection-head">
+        <span class="diamond"></span>
+        <h2>Momentum Mod Maps</h2>
+        <span class="line"></span>
+        <span class="count" id="momentum-count"></span>
+      </div>
+      <div id="momentum-grid" class="maps-grid"></div>
+    </section>
+
+    <section class="collection">
+      <div class="collection-head">
+        <span class="diamond"></span>
+        <h2>Counter-Strike: Source Maps</h2>
+        <span class="line"></span>
+        <span class="count" id="css-count"></span>
+      </div>
+      <div id="css-grid" class="maps-grid"></div>
+    </section>
+
+    <p class="archive-note reveal">The rest of my maps can be found on my <a href="https://gamebanana.com/members/1731881" target="_blank" rel="noopener noreferrer">GameBanana</a>.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span class="diamond diamond-float"></span>
+    <span class="fname">Road2SilverEagleMaster</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

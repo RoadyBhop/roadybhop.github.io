@@ -1,16 +1,83 @@
+<!DOCTYPE html>
 <html lang="en">
-    <link rel="stylesheet" href="styles.css">
-    <div class="topnav">
-        <a href="/index.html">Home</a><a href="maps.html">Maps</a><a href="contact.html">Contact</a><a class="last" href="about.html">About</a>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roady Bhop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="liminal-bg"></div>
+<div class="grain"></div>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand"><span class="diamond diamond-float"></span><span class="label">Roady</span></a>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="maps.html">Maps</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <button class="menu-btn" aria-label="Menu"></button>
+  </div>
+  <div class="mobile-menu glass">
+    <a href="index.html" class="active">Home</a>
+    <a href="maps.html">Maps</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</header>
+
+<main class="page-fade">
+  <section class="hero">
+    <div class="hero-bg">
+      <img src="https://roadybhop.github.io/images/2shinyimage1.jpg" alt="bhop map" />
+      <div class="grad1"></div><div class="grad2"></div>
     </div>
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>RoadyBhop</title>
-    </head>
-    <script src="scripts.js"></script>
-    <body onload="setInterval(changeBackground,4000);" style="background-image: url(images/2shinyimage1.jpg);">
-        <h1>Roady Bhop</h1>
-    </body>
+    <div class="hero-content">
+      <div style="display:flex;justify-content:center;margin-bottom:24px;margin-top:8px">
+        <span class="diamond diamond-float" style="width:32px;height:32px;border-width:2px;box-shadow:0 0 30px rgba(111,224,208,.6)"></span>
+      </div>
+      <h1 class="glow-text">ROADY BHOP</h1>
+      <p class="hero-tagline">Bunny-hop Mapper since 2013 // pushing the Source engine to its limits</p>
+      <div class="hero-btns">
+        <a href="maps.html" class="btn btn-primary">Explore Maps <span data-icon="arrow"></span></a>
+        <a href="about.html" class="btn btn-ghost">About Roady</a>
+      </div>
+    </div>
+    <div class="scroll-ind"><span></span></div>
+  </section>
+
+  <section class="container stats">
+    <div id="stats-grid" class="stats-grid glass reveal"></div>
+  </section>
+
+  <section class="intro">
+    <div class="reveal">
+      <span class="eyebrow">// The Mapper</span>
+      <h2>Gameplay over aesthetics, always.</h2>
+      <p>Over 100 maps built inside Hammer since 2020, from silly experiments to some of the hardest bunny-hop courses ever compiled. Each one bends the Source engine a little further than it was meant to go.</p>
+      <a href="maps.html" class="link-arrow">Browse the archive <span data-icon="arrow"></span></a>
+    </div>
+    <div class="reveal">
+      <div class="feature glass"><div class="ico" data-icon="mappin"></div><div><h3>100+ Maps</h3><p>Momentum Mod &amp; Counter-Strike: Source archives</p></div></div>
+      <div class="feature glass"><div class="ico" data-icon="zap"></div><div><h3>Engine at the Edge</h3><p>bhop_4matan uses 100% of Source's vertices</p></div></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span class="diamond diamond-float"></span>
+    <span class="fname">Road2SilverEagleMaster</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
 </html>

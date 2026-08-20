@@ -1,46 +1,65 @@
+<!DOCTYPE html>
 <html lang="en">
-    <link rel="stylesheet" href="styles.css">
-    <div class="topnav">
-        <a href="/index.html">Home</a><a href="maps.html">Maps</a><a href="contact.html">Contact</a><a class="last" href="about.html">About</a>
-      </div>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoadyContact</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roady Bhop — Contact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <h1>Contact</h1>
-    <div>
-        <a>
-            <img height="40px" src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a69f118df70ad7828d4_icon_clyde_blurple_RGB.svg">
-            <p style="font-size: 20px;">Discord: Road2SilverEagleMaster#7148</p>
-        </a>
+<div class="liminal-bg"></div>
+<div class="grain"></div>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand"><span class="diamond diamond-float"></span><span class="label">Roady</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="maps.html">Maps</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" class="active">Contact</a>
+    </nav>
+    <button class="menu-btn" aria-label="Menu"></button>
+  </div>
+  <div class="mobile-menu glass">
+    <a href="index.html">Home</a>
+    <a href="maps.html">Maps</a>
+    <a href="about.html">About</a>
+    <a href="contact.html" class="active">Contact</a>
+  </div>
+</header>
+
+<main class="page-fade pt-nav">
+  <div class="container-xs">
+    <div class="page-head">
+      <span class="eyebrow">// Reach Out</span>
+      <h1 class="glow-text">Contact</h1>
+      <p>Find me across the bhop-verse.</p>
     </div>
-    <div>
-        <a href="https://steamcommunity.com/id/BeeHawper/" style="text-decoration: none; color: white;">
-            <img height="40px" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/768px-Steam_icon_logo.svg.png">
-            <p style="font-size: 20px;">Steam: Road2SilverEagleMaster</p>
-        </a>
+
+    <div class="contact-group">
+      <h2>Direct</h2>
+      <div id="direct-links" class="link-grid two"></div>
     </div>
-    <h1>Other Links</h1>
-    <div>
-        <a href="https://gamebanana.com/members/1731881" style="text-decoration: none; color: white;">
-            <img height="40px" src="https://images.gamebanana.com/static/img/favicon/256x256.png">
-            <p style="font-size: 20px;">GameBanana: Roady</p>
-        </a>
+
+    <div class="contact-group">
+      <h2>Other Links</h2>
+      <div id="other-links" class="link-grid"></div>
     </div>
-    <div>
-        <a href="https://momentum-mod.org/dashboard/profile/3416" style="text-decoration: none; color: white;">
-            <img height="40px" src="https://avatars.githubusercontent.com/u/11344047?s=200&v=4">
-            <p style="font-size: 20px;">Momentum Mod: Road2SilverEagleMaster</p>
-        </a>
-    </div>
-    <div>
-        <a href="https://www.youtube.com/@JessicaBhop" style="text-decoration: none; color: white;">
-            <img height="40px" src="images/youtube.png">
-            <p style="font-size: 20px;">Youtube: Jessica Bhop</p>
-        </a>
-    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span class="diamond diamond-float"></span>
+    <span class="fname">Road2SilverEagleMaster</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
