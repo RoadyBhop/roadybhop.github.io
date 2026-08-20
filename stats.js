@@ -92,15 +92,40 @@
     return exact || c[0];
   }
 
+  /* ---------------- map index (fetched live on first lookup, cached for the session) ---------------- */
+  let RAWMAPS = null;                 // { mapID: [[g,tt,tn,type,tier], ...] }
+  let MAPS_FETCHED_AT = null;
+  async function loadMaps() {
+    if (RAWMAPS) return RAWMAPS;
+    const maps = {}; let n = 0;
+    for await (const page of pages("/v1/maps?expand=leaderboards")) {
+      for (const m of page.data) {
+        const entries = [];
+        for (const l of (m.leaderboards || [])) {
+          if (l.style !== 0) continue;
+          const ty = l.type;
+          if (ty !== 0 && ty !== 1) continue;      // RANKED(0) / UNRANKED(1) only
+          if (!GM[l.gamemode]) continue;
+          entries.push([l.gamemode, l.trackType, l.trackNum, ty, l.tier]);
+        }
+        if (entries.length) maps[m.id] = entries;
+      }
+      n += page.data.length;
+      status(`<span class="spin"></span>loading current map list &mdash; ${n}${page.total ? " / " + page.total : ""}`);
+    }
+    RAWMAPS = maps; MAPS_FETCHED_AT = new Date();
+    return RAWMAPS;
+  }
+
   /* ---------------- computation ---------------- */
   function newMode() {
     const t = (tiered) => tiered ? { total:0, completed:0, tiers:{} } : { total:0, completed:0 };
     return { main:{ranked:t(1),unranked:t(1)}, stage:{ranked:t(0),unranked:t(0)}, bonus:{ranked:t(1),unranked:t(1)} };
   }
-  function buildIndex(md) {
+  function buildIndex(maps) {
     const modes = {}, lookup = new Map();
-    for (const mid in md.maps) {
-      for (const e of md.maps[mid]) {
+    for (const mid in maps) {
+      for (const e of maps[mid]) {
         const g = e[0], tt = e[1], tn = e[2], type = e[3], tier = e[4];
         if (!GM[g]) continue;
         if (!modes[g]) modes[g] = newMode();
@@ -112,9 +137,27 @@
     }
     return { modes, lookup };
   }
+  function aggregateModes(modes) {
+    const A = newMode();
+    for (const g of ORDER) {
+      const m = modes[g]; if (!m) continue;
+      for (const tt of ["main","stage","bonus"]) {
+        for (const rk of ["ranked","unranked"]) {
+          const s = m[tt][rk], d = A[tt][rk];
+          d.total += s.total; d.completed += s.completed;
+          if (d.tiers && s.tiers) for (const t in s.tiers) {
+            (d.tiers[t] = d.tiers[t] || {total:0,completed:0});
+            d.tiers[t].total += s.tiers[t].total;
+            d.tiers[t].completed += s.tiers[t].completed;
+          }
+        }
+      }
+    }
+    return A;
+  }
   async function compute(user) {
-    if (!window.MOM_DATA || !window.MOM_DATA.maps) throw new Error("Map data failed to load.");
-    const { modes, lookup } = buildIndex(window.MOM_DATA);
+    const maps = await loadMaps();
+    const { modes, lookup } = buildIndex(maps);
     let scanned = 0, seen = 0;
     for await (const page of pages(`/v1/runs?userID=${user.id}&isPB=true`)) {
       for (const r of page.data) {
@@ -147,8 +190,11 @@
 
   function trackHTML(label, p) {
     const c = comb(p), pc = pct(c.c, c.t);
+    const rp = pct(p.ranked.completed || 0, p.ranked.total || 0);
+    const up = pct(p.unranked.completed || 0, p.unranked.total || 0);
     const sub = c.t === 0 ? "no maps"
-      : `Ranked ${p.ranked.completed}/${p.ranked.total} &middot; Unranked ${p.unranked.completed}/${p.unranked.total}`;
+      : `Ranked ${p.ranked.completed}/${p.ranked.total} (${p.ranked.total ? fp(rp) + "%" : "&mdash;"}) &middot; ` +
+        `Unranked ${p.unranked.completed}/${p.unranked.total} (${p.unranked.total ? fp(up) + "%" : "&mdash;"})`;
     return `<div>
       <div class="trk-top">
         <span class="trk-l">${label}</span>
@@ -162,6 +208,7 @@
 
   function render(data) {
     REPORT = data;
+    data.all = aggregateModes(data.modes);
     const u = data.user, gen = new Date(data.generatedAt);
 
     let mainC=0,mainT=0,stgC=0,stgT=0,bonC=0,bonT=0,played=0,best=null;
@@ -202,6 +249,23 @@
       </div>`;
     }).join("");
 
+    const allCard = (() => {
+      const all = data.all;
+      const mc = comb(pair(all,"main")), mp = pct(mc.c, mc.t);
+      return `<div class="gcard glass allcard">
+        <div class="gc-head"><span class="diamond"></span>
+          <span class="gc-name">All gamemodes</span><span class="gc-cat">Summary &mdash; every box combined</span>
+          <span class="gc-right"><div class="gc-pct">${fp(mp)}%</div><div class="gc-frac">${mc.c} / ${mc.t} main</div></span></div>
+        <div class="tracks">
+          ${trackHTML("Main",  pair(all,"main"))}
+          ${trackHTML("Stages",pair(all,"stage"))}
+          ${trackHTML("Bonus", pair(all,"bonus"))}
+        </div>
+        <div class="tier-h" data-mode="all"></div>
+        <div class="tiers alltiers" data-mode="all"></div>
+      </div>`;
+    })();
+
     $("report").innerHTML = `
       <div class="rep-head glass">${avatar}
         <div class="rep-who"><div class="nm">${escf(u.alias)}</div>
@@ -216,11 +280,12 @@
         <div class="seg" id="segRank"><button data-rank="ranked" class="on">Ranked</button><button data-rank="unranked">Unranked</button></div>
       </div>
       <div class="rgrid">${cards}</div>
+      ${allCard}
       <div class="repnote"><b>How this is measured.</b> A track is <b>complete</b> when the player has a personal-best run on its
         default-style leaderboard. <b>Main</b> = full map, <b>Stages</b> = staged segments, <b>Bonus</b> = bonus tracks.
         <b>Ranked</b>/<b>Unranked</b> is the leaderboard's official status; auto-generated hidden cross-mode leaderboards are excluded.
-        Stages carry no tier, so the by-tier view covers main tracks and bonuses. Map totals baked
-        ${window.MOM_DATA && window.MOM_DATA.generatedAt ? "on " + new Date(window.MOM_DATA.generatedAt).toLocaleDateString() : ""};
+        Stages carry no tier, so the by-tier view covers main tracks and bonuses.
+        Map totals are fetched live from the current map list${MAPS_FETCHED_AT ? " at " + MAPS_FETCHED_AT.toLocaleTimeString() : ""};
         completion is live as of ${gen.toLocaleString()}.</div>`;
 
     wireSeg("segTrack", b => TIER_TRACK = b.getAttribute("data-track"));
@@ -237,7 +302,7 @@
     });
     document.querySelectorAll(".tiers").forEach(box => {
       const g = box.getAttribute("data-mode");
-      const m = REPORT.modes[g];
+      const m = g === "all" ? REPORT.all : REPORT.modes[g];
       const bucket = (m && m[TIER_TRACK] && m[TIER_TRACK][TIER_RANK]) || { tiers:{} };
       const tiers = bucket.tiers || {};
       const keys = Object.keys(tiers).map(Number).sort((a,b)=>a-b);

@@ -98,6 +98,12 @@
   .repnote{margin-top:28px;font-size:12px;line-height:1.7;color:#6b727d;border-top:1px solid var(--border);padding-top:16px}
   .repnote b{color:var(--muted)}
 
+  /* all-gamemodes summary box */
+  .allcard{margin-top:16px;border-color:var(--accent-dim);
+    background:linear-gradient(180deg,rgba(111,224,208,.06),rgba(255,255,255,.012))}
+  .allcard .gc-name{font-size:17px}
+  .allcard .alltiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px 24px}
+
   @media(max-width:600px){ .lookup{flex-direction:column} }
 </style>
 </head>
@@ -153,7 +159,6 @@
   </div>
 </footer>
 
-<script src="momentum-data.js"></script>
 <script src="script.js"></script>
 <script src="stats.js"></script>
 </body>
