@@ -1,7 +1,8 @@
 /* Momentum completion lookup — client logic for stats.html
- * Denominators come baked in window.MOM_DATA (momentum-data.js).
- * The user's personal bests are fetched live through a Cloudflare Worker
- * proxy whose URL is stored in localStorage (see momentum-worker.js). */
+ * Map list (totals) and the player's personal bests are both fetched live
+ * through a Cloudflare Worker proxy whose URL is stored in localStorage
+ * (see momentum-worker.js). Clicking any section opens a filterable drawer
+ * listing the completed/incomplete maps behind it. */
 (function () {
   "use strict";
 
@@ -93,11 +94,11 @@
   }
 
   /* ---------------- map index (fetched live on first lookup, cached for the session) ---------------- */
-  let RAWMAPS = null;                 // { mapID: [[g,tt,tn,type,tier], ...] }
+  let RAWMAPS = null, RAWNAMES = null;   // maps: {id:[[g,tt,tn,type,tier]]}, names: {id:name}
   let MAPS_FETCHED_AT = null;
   async function loadMaps() {
-    if (RAWMAPS) return RAWMAPS;
-    const maps = {}; let n = 0;
+    if (RAWMAPS) return { maps: RAWMAPS, names: RAWNAMES };
+    const maps = {}, names = {}; let n = 0;
     for await (const page of pages("/v1/maps?expand=leaderboards")) {
       for (const m of page.data) {
         const entries = [];
@@ -108,13 +109,13 @@
           if (!GM[l.gamemode]) continue;
           entries.push([l.gamemode, l.trackType, l.trackNum, ty, l.tier]);
         }
-        if (entries.length) maps[m.id] = entries;
+        if (entries.length) { maps[m.id] = entries; names[m.id] = m.name || ("map " + m.id); }
       }
       n += page.data.length;
       status(`<span class="spin"></span>loading current map list &mdash; ${n}${page.total ? " / " + page.total : ""}`);
     }
-    RAWMAPS = maps; MAPS_FETCHED_AT = new Date();
-    return RAWMAPS;
+    RAWMAPS = maps; RAWNAMES = names; MAPS_FETCHED_AT = new Date();
+    return { maps, names };
   }
 
   /* ---------------- computation ---------------- */
@@ -156,28 +157,39 @@
     return A;
   }
   async function compute(user) {
-    const maps = await loadMaps();
+    const { maps, names } = await loadMaps();
     const { modes, lookup } = buildIndex(maps);
+    const done = new Set();
     let scanned = 0, seen = 0;
     for await (const page of pages(`/v1/runs?userID=${user.id}&isPB=true`)) {
       for (const r of page.data) {
         seen++;
         if (r.style !== 0) continue;
         scanned++;
-        const info = lookup.get(r.mapID + "|" + r.gamemode + "|" + r.trackType + "|" + r.trackNum);
+        const key = r.mapID + "|" + r.gamemode + "|" + r.trackType + "|" + r.trackNum;
+        const info = lookup.get(key);
         if (!info) continue;
         const b = modes[r.gamemode] && modes[r.gamemode][TT[r.trackType]] &&
                   modes[r.gamemode][TT[r.trackType]][info[0] === 0 ? "ranked" : "unranked"];
         if (!b) continue;
         b.completed++;
         if (b.tiers && info[1] != null && b.tiers[info[1]]) b.tiers[info[1]].completed++;
+        done.add(key);
       }
       status(`<span class="spin"></span>reading personal bests &mdash; ${seen}${page.total ? " / " + page.total : ""}`);
+    }
+    const rows = [];
+    for (const mid in maps) {
+      for (const e of maps[mid]) {
+        const g = e[0], tt = e[1], tn = e[2], type = e[3], tier = e[4];
+        rows.push({ mid:+mid, name:names[mid], g, tt, tn, ranked:type===0, tier,
+                    done: done.has(mid + "|" + g + "|" + tt + "|" + tn) });
+      }
     }
     const prof = user.profile || {};
     return {
       user: { id:user.id, alias:user.alias || ("User "+user.id), steamID:user.steamID, avatar: prof.avatarURL || null },
-      modes, scanned, generatedAt: new Date().toISOString()
+      modes, rows, scanned, generatedAt: new Date().toISOString()
     };
   }
 
@@ -188,15 +200,32 @@
 
   let REPORT = null, TIER_TRACK = "main", TIER_RANK = "ranked";
 
-  function trackHTML(label, p) {
+  /* encode/decode a filter into a data-nav attribute for click-through */
+  function navAttr(f) {
+    const tiers = f.tiers === "all" ? "all" : (Array.isArray(f.tiers) ? f.tiers.join(",") : String(f.tiers));
+    return `data-nav="g=${f.g}&track=${f.track}&rank=${f.rank || "all"}&tiers=${tiers}&done=${f.done || "all"}"`;
+  }
+  function parseNav(str) {
+    const p = new URLSearchParams(str), t = p.get("tiers");
+    return {
+      g: p.get("g") || "all",
+      track: p.get("track") || "all",
+      rank: p.get("rank") || "all",
+      tiers: (!t || t === "all") ? "all" : t.split(",").map(Number),
+      done: p.get("done") || "all"
+    };
+  }
+
+  function trackHTML(label, p, g, trackKey) {
     const c = comb(p), pc = pct(c.c, c.t);
     const rp = pct(p.ranked.completed || 0, p.ranked.total || 0);
     const up = pct(p.unranked.completed || 0, p.unranked.total || 0);
+    const base = { g, track: trackKey, tiers: "all", done: "all" };
     const sub = c.t === 0 ? "no maps"
-      : `Ranked ${p.ranked.completed}/${p.ranked.total} (${p.ranked.total ? fp(rp) + "%" : "&mdash;"}) &middot; ` +
-        `Unranked ${p.unranked.completed}/${p.unranked.total} (${p.unranked.total ? fp(up) + "%" : "&mdash;"})`;
+      : `<span class="lnk" ${navAttr({ ...base, rank:"ranked" })}>Ranked ${p.ranked.completed}/${p.ranked.total} (${p.ranked.total ? fp(rp)+"%" : "&mdash;"})</span> &middot; ` +
+        `<span class="lnk" ${navAttr({ ...base, rank:"unranked" })}>Unranked ${p.unranked.completed}/${p.unranked.total} (${p.unranked.total ? fp(up)+"%" : "&mdash;"})</span>`;
     return `<div>
-      <div class="trk-top">
+      <div class="trk-top lnk" ${navAttr({ ...base, rank:"all" })}>
         <span class="trk-l">${label}</span>
         <span class="bar"><i style="width:${pc.toFixed(1)}%"></i></span>
         <span class="trk-f"><b>${c.c}</b>/${c.t}</span>
@@ -218,12 +247,13 @@
       const bo=comb(pair(data.modes[g],"bonus")); bonC+=bo.c; bonT+=bo.t;
       if (mm.c>0){ played++; const p=pct(mm.c,mm.t); if(!best||p>best.p) best={g,p}; }
     }
+    const allNav = (track) => ({ g:"all", track, rank:"all", tiers:"all", done:"all" });
     const kpis = [
-      {v: fp(pct(mainC,mainT))+"%", l:"Main completion"},
-      {v: mainC+" / "+mainT, l:"Main tracks"},
-      {v: stgC+" / "+stgT, l:"Stages"},
-      {v: bonC+" / "+bonT, l:"Bonuses"},
-      {v: best ? GM[best.g].name : "&mdash;", l:"Strongest mode"}
+      {v: fp(pct(mainC,mainT))+"%", l:"Main completion", nav: allNav("main")},
+      {v: mainC+" / "+mainT, l:"Main tracks", nav: allNav("main")},
+      {v: stgC+" / "+stgT, l:"Stages", nav: allNav("stage")},
+      {v: bonC+" / "+bonT, l:"Bonuses", nav: allNav("bonus")},
+      {v: best ? GM[best.g].name : "&mdash;", l:"Strongest mode", nav: best ? {g:best.g,track:"main",rank:"all",tiers:"all",done:"all"} : null}
     ];
 
     const initials = (u.alias||"?").slice(0,2).toUpperCase();
@@ -231,18 +261,20 @@
       ? `<img class="rep-av" src="${escf(u.avatar)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'rep-av',textContent:'${initials}'}))">`
       : `<div class="rep-av">${initials}</div>`;
 
+    const headInner = (g) => `<span class="diamond"></span>
+        <span class="gc-name">${escf(GM[g].name)}</span><span class="gc-cat">${escf(GM[g].cat)}</span>`;
     const cards = ORDER.map(g => {
       const m = data.modes[g];
-      const head = `<div class="gc-head"><span class="diamond"></span>
-        <span class="gc-name">${escf(GM[g].name)}</span><span class="gc-cat">${escf(GM[g].cat)}</span>`;
-      if (!m) return `<div class="gcard glass empty">${head}</div><div class="gc-frac" style="margin-top:8px">No ranked maps</div></div>`;
+      if (!m) return `<div class="gcard glass empty"><div class="gc-head">${headInner(g)}</div>
+        <div class="gc-frac" style="margin-top:8px">No ranked maps</div></div>`;
       const mc = comb(pair(m,"main")), mp = pct(mc.c, mc.t);
       return `<div class="gcard glass">
-        ${head}<span class="gc-right"><div class="gc-pct">${fp(mp)}%</div><div class="gc-frac">${mc.c} / ${mc.t} main</div></span></div>
+        <div class="gc-head lnk" ${navAttr({g, track:"main", rank:"all", tiers:"all", done:"all"})}>${headInner(g)}
+          <span class="gc-right"><div class="gc-pct">${fp(mp)}%</div><div class="gc-frac">${mc.c} / ${mc.t} main</div></span></div>
         <div class="tracks">
-          ${trackHTML("Main",  pair(m,"main"))}
-          ${trackHTML("Stages",pair(m,"stage"))}
-          ${trackHTML("Bonus", pair(m,"bonus"))}
+          ${trackHTML("Main",  pair(m,"main"),  g, "main")}
+          ${trackHTML("Stages",pair(m,"stage"), g, "stage")}
+          ${trackHTML("Bonus", pair(m,"bonus"), g, "bonus")}
         </div>
         <div class="tier-h" data-mode="${g}"></div>
         <div class="tiers" data-mode="${g}"></div>
@@ -253,13 +285,13 @@
       const all = data.all;
       const mc = comb(pair(all,"main")), mp = pct(mc.c, mc.t);
       return `<div class="gcard glass allcard">
-        <div class="gc-head"><span class="diamond"></span>
+        <div class="gc-head lnk" ${navAttr({g:"all", track:"main", rank:"all", tiers:"all", done:"all"})}><span class="diamond"></span>
           <span class="gc-name">All gamemodes</span><span class="gc-cat">Summary &mdash; every box combined</span>
           <span class="gc-right"><div class="gc-pct">${fp(mp)}%</div><div class="gc-frac">${mc.c} / ${mc.t} main</div></span></div>
         <div class="tracks">
-          ${trackHTML("Main",  pair(all,"main"))}
-          ${trackHTML("Stages",pair(all,"stage"))}
-          ${trackHTML("Bonus", pair(all,"bonus"))}
+          ${trackHTML("Main",  pair(all,"main"),  "all", "main")}
+          ${trackHTML("Stages",pair(all,"stage"), "all", "stage")}
+          ${trackHTML("Bonus", pair(all,"bonus"), "all", "bonus")}
         </div>
         <div class="tier-h" data-mode="all"></div>
         <div class="tiers alltiers" data-mode="all"></div>
@@ -272,7 +304,8 @@
           <div class="sb">ID <code>${u.id}</code>${u.steamID?` &middot; Steam <code>${escf(u.steamID)}</code>`:""} &middot; ${data.scanned.toLocaleString()} PBs scanned</div>
         </div>
       </div>
-      <div class="kpis">${kpis.map(k=>`<div class="kpi glass"><div class="v">${k.v}</div><div class="l">${k.l}</div></div>`).join("")}</div>
+      <div class="kpis">${kpis.map(k=>`<div class="kpi glass ${k.nav?"lnk":""}" ${k.nav?navAttr(k.nav):""}><div class="v">${k.v}</div><div class="l">${k.l}</div></div>`).join("")}</div>
+      <div class="click-hint">Tip &mdash; click any number, bar, or tier to list the maps behind it.</div>
       <div class="controls">
         <span class="cl">Tier view &mdash; track</span>
         <div class="seg" id="segTrack"><button data-track="main" class="on">Main</button><button data-track="bonus">Bonus</button></div>
@@ -309,7 +342,7 @@
       if (!keys.length) { box.innerHTML = `<div class="tempty">No ${TIER_RANK} ${trackLabel.toLowerCase()}.</div>`; return; }
       box.innerHTML = keys.map(t => {
         const td = tiers[t], tp = pct(td.completed, td.total), z = td.completed === 0 ? " z" : "";
-        return `<div class="tr${z}"><span class="tl">Tier ${t}</span>
+        return `<div class="tr${z} lnk" ${navAttr({ g, track:TIER_TRACK, rank:TIER_RANK, tiers:[t], done:"all" })}><span class="tl">Tier ${t}</span>
           <span class="tb"><i style="width:${tp.toFixed(1)}%"></i></span>
           <span class="tc"><b>${td.completed}</b>/${td.total}</span></div>`;
       }).join("");
@@ -322,6 +355,121 @@
       seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
       b.classList.add("on"); apply(b); renderTiers();
     });
+  }
+
+  /* ---------------- browse drawer (map list with filters) ---------------- */
+  let FILTERS = null;
+  const ICON = (name, fb) => (typeof ICONS !== "undefined" && ICONS[name]) || fb;
+
+  function ensureDrawer() {
+    if ($("browse")) return;
+    const back = document.createElement("div"); back.className = "drawer-back"; back.id = "drawerBack";
+    const dr = document.createElement("div"); dr.className = "drawer"; dr.id = "browse";
+    dr.innerHTML = `
+      <div class="dr-head">
+        <div class="dr-title" id="drTitle">Maps</div>
+        <button class="dr-close" id="drClose" aria-label="Close">${ICON("x","&times;")}</button>
+      </div>
+      <div class="dr-filters" id="drFilters"></div>
+      <div class="dr-count" id="drCount"></div>
+      <div class="dr-list" id="drList"></div>`;
+    document.body.appendChild(back);
+    document.body.appendChild(dr);
+    back.addEventListener("click", closeDrawer);
+    $("drClose").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+  }
+  function openDrawer(f) {
+    if (!REPORT || !REPORT.rows) return;
+    ensureDrawer();
+    FILTERS = f;
+    renderFilters(); renderList();
+    $("drawerBack").classList.add("open");
+    $("browse").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeDrawer() {
+    const b = $("drawerBack"), d = $("browse");
+    if (b) b.classList.remove("open");
+    if (d) d.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function segHTML(name, values, cur, labels) {
+    return `<div class="seg drseg" data-seg="${name}">` +
+      values.map(v => `<button data-val="${v}" class="${cur === v ? "on" : ""}">${labels[v]}</button>`).join("") + `</div>`;
+  }
+  function maxTier() { let mx = 0; for (const r of REPORT.rows) if (r.tier > mx) mx = r.tier; return mx || 10; }
+  function renderFilters() {
+    const f = FILTERS;
+    const gmOpts = `<option value="all">All gamemodes</option>` +
+      ORDER.map(g => `<option value="${g}" ${String(f.g) === String(g) ? "selected" : ""}>${escf(GM[g].name)}</option>`).join("");
+    const stageOnly = f.track === "stage";
+    const mx = maxTier();
+    const chips = stageOnly ? `<span class="dr-note">stages have no tier</span>`
+      : `<button class="chip ${f.tiers === "all" ? "on" : ""}" data-tier="all">All</button>` +
+        Array.from({ length: mx }, (_, i) => i + 1).map(t => {
+          const on = f.tiers !== "all" && f.tiers.includes(t);
+          return `<button class="chip ${on ? "on" : ""}" data-tier="${t}">${t}</button>`;
+        }).join("");
+    $("drFilters").innerHTML = `
+      <label class="dr-field"><span>Gamemode</span><select id="fGm">${gmOpts}</select></label>
+      <div class="dr-field"><span>Track</span>${segHTML("track", ["all","main","stage","bonus"], f.track, {all:"All",main:"Main",stage:"Stage",bonus:"Bonus"})}</div>
+      <div class="dr-field"><span>Rank</span>${segHTML("rank", ["all","ranked","unranked"], f.rank, {all:"All",ranked:"Ranked",unranked:"Unranked"})}</div>
+      <div class="dr-field"><span>Completion</span>${segHTML("done", ["all","no","yes"], f.done, {all:"All",no:"Incomplete",yes:"Completed"})}</div>
+      <div class="dr-field"><span>Tier</span><div class="chips">${chips}</div></div>`;
+    $("fGm").addEventListener("change", e => { FILTERS.g = e.target.value; renderFilters(); renderList(); });
+    ["track","rank","done"].forEach(name => {
+      $("drFilters").querySelector(`.drseg[data-seg="${name}"]`).addEventListener("click", e => {
+        const b = e.target.closest("button"); if (!b) return;
+        FILTERS[name] = b.getAttribute("data-val");
+        if (name === "track" && FILTERS.track === "stage") FILTERS.tiers = "all";
+        renderFilters(); renderList();
+      });
+    });
+    $("drFilters").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+      const t = ch.getAttribute("data-tier");
+      if (t === "all") FILTERS.tiers = "all";
+      else {
+        const n = +t;
+        if (FILTERS.tiers === "all") FILTERS.tiers = [n];
+        else {
+          const i = FILTERS.tiers.indexOf(n);
+          if (i >= 0) FILTERS.tiers.splice(i, 1); else FILTERS.tiers.push(n);
+          if (!FILTERS.tiers.length) FILTERS.tiers = "all";
+        }
+      }
+      renderFilters(); renderList();
+    }));
+  }
+  function applyFilters(rows, f) {
+    return rows.filter(r => {
+      if (f.g !== "all" && r.g !== +f.g) return false;
+      if (f.track !== "all" && TT[r.tt] !== f.track) return false;
+      if (f.rank !== "all" && (f.rank === "ranked") !== r.ranked) return false;
+      if (f.tiers !== "all") { if (r.tier == null || !f.tiers.includes(r.tier)) return false; }
+      if (f.done === "yes" && !r.done) return false;
+      if (f.done === "no" && r.done) return false;
+      return true;
+    });
+  }
+  function renderList() {
+    const f = FILTERS;
+    $("drTitle").innerHTML = f.g === "all" ? "All gamemodes" : escf(GM[f.g].name);
+    const rows = applyFilters(REPORT.rows, f).sort((a, b) =>
+      (a.done - b.done) || (a.g - b.g) || (a.tt - b.tt) || ((a.tier||0) - (b.tier||0)) || a.name.localeCompare(b.name));
+    const doneN = rows.filter(r => r.done).length;
+    $("drCount").innerHTML = `${rows.length} track${rows.length === 1 ? "" : "s"} &middot; <b>${doneN}</b> completed &middot; ${fp(pct(doneN, rows.length))}%`;
+    if (!rows.length) { $("drList").innerHTML = `<div class="dr-empty">No maps match these filters.</div>`; return; }
+    const check = ICON("check", "&#10003;");
+    $("drList").innerHTML = rows.map(r => {
+      const meta = `${escf(GM[r.g].cat)} &middot; ${TT[r.tt]}${r.tn > 1 ? " " + r.tn : ""}${r.tier != null ? " &middot; T" + r.tier : ""} &middot; ${r.ranked ? "ranked" : "unranked"}`;
+      return `<div class="mrow ${r.done ? "is-done" : ""}">
+        <span class="mmark">${r.done ? check : ""}</span>
+        <span class="mname">${escf(r.name)}</span>
+        <span class="mmeta">${meta}</span>
+      </div>`;
+    }).join("");
   }
 
   /* ---------------- status + proxy UI ---------------- */
@@ -392,6 +540,10 @@
   document.addEventListener("DOMContentLoaded", () => {
     renderProxyBar();
     $("lookup").addEventListener("submit", e => { e.preventDefault(); lookup($("q").value.trim()); });
+    $("report").addEventListener("click", e => {
+      const el = e.target.closest("[data-nav]");
+      if (el) openDrawer(parseNav(el.getAttribute("data-nav")));
+    });
     const pre = new URLSearchParams(location.search).get("u");
     if (pre) { $("q").value = pre; if (getProxy()) lookup(pre); }
   });

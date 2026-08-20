@@ -104,7 +104,62 @@
   .allcard .gc-name{font-size:17px}
   .allcard .alltiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px 24px}
 
+  /* clickable affordances */
+  .lnk{cursor:pointer}
+  .trk-top.lnk{border-radius:6px;transition:background .2s}
+  .trk-top.lnk:hover{background:rgba(111,224,208,.07)}
+  .gc-head.lnk{border-radius:8px;transition:background .2s}
+  .gc-head.lnk:hover{background:rgba(111,224,208,.05)}
+  .gc-head.lnk:hover .gc-name{color:var(--accent)}
+  .tr.lnk{border-radius:5px;transition:background .2s}
+  .tr.lnk:hover{background:rgba(111,224,208,.07)}
+  .trk-sub .lnk{transition:color .2s}
+  .trk-sub .lnk:hover{color:var(--accent)}
+  .kpi.lnk{transition:border-color .2s,transform .2s}
+  .kpi.lnk:hover{border-color:var(--accent-dim);transform:translateY(-2px)}
+  .click-hint{margin:0 2px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b727d}
+
+  /* browse drawer */
+  .drawer-back{position:fixed;inset:0;z-index:60;background:rgba(4,5,7,.72);backdrop-filter:blur(4px);
+    opacity:0;pointer-events:none;transition:opacity .3s}
+  .drawer-back.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);z-index:61;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--bg-1),var(--bg));border-left:1px solid var(--border);
+    transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:-24px 0 60px rgba(0,0,0,.45)}
+  .drawer.open{transform:translateX(0)}
+  .dr-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex:0 0 auto}
+  .dr-title{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500}
+  .dr-close{color:var(--muted);padding:6px;line-height:0}
+  .dr-close:hover{color:var(--fg)}
+  .dr-close svg{width:20px;height:20px}
+  .dr-filters{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:11px;flex:0 0 auto}
+  .dr-field{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .dr-field>span:first-child{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);width:88px;flex:0 0 auto}
+  .dr-field select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-family:inherit;font-size:13px;padding:7px 10px;outline:none}
+  .dr-field select:focus{border-color:var(--accent-dim)}
+  .drseg button{padding:5px 12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{min-width:30px;height:30px;padding:0 6px;border:1px solid var(--border);border-radius:8px;color:var(--muted);
+    font-family:'JetBrains Mono',monospace;font-size:12px;transition:all .2s}
+  .chip[data-tier="all"]{padding:0 12px}
+  .chip:hover{border-color:var(--accent-dim);color:var(--fg)}
+  .chip.on{background:var(--accent);color:#06100e;border-color:var(--accent)}
+  .dr-note{color:#6b727d;font-family:'JetBrains Mono',monospace;font-size:12px}
+  .dr-count{padding:12px 22px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);flex:0 0 auto}
+  .dr-count b{color:var(--accent)}
+  .dr-list{flex:1 1 auto;overflow-y:auto;padding:8px 12px 48px}
+  .mrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;padding:9px 12px;border-radius:8px}
+  .mrow:hover{background:rgba(255,255,255,.035)}
+  .mrow:not(.is-done){opacity:.8}
+  .mmark{color:var(--accent);display:flex;justify-content:center}
+  .mmark svg{width:15px;height:15px}
+  .mname{font-family:'JetBrains Mono',monospace;font-size:13px;word-break:break-all}
+  .mrow:not(.is-done) .mname{color:var(--muted)}
+  .mmeta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b727d;text-align:right;white-space:nowrap}
+  .dr-empty{padding:36px 20px;text-align:center;color:#6b727d;font-family:'JetBrains Mono',monospace;font-size:13px}
+
   @media(max-width:600px){ .lookup{flex-direction:column} }
+  @media(max-width:560px){ .mmeta{display:none} }
 </style>
 </head>
 <body>
