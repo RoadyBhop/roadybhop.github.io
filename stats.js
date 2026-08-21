@@ -262,7 +262,7 @@
   const pair = (m, tt) => (m && m[tt]) ? m[tt] : { ranked:EB, unranked:EB };
   const comb = (p) => ({ c:(p.ranked.completed||0)+(p.unranked.completed||0), t:(p.ranked.total||0)+(p.unranked.total||0) });
 
-  let REPORT = null, TIER_TRACKS = ["main"], TIER_RANKS = ["ranked"], CURRENT_USER = null;
+  let REPORT = null, TIER_TRACKS = ["main"], TIER_RANKS = ["ranked"], PANELS = [];
 
   /* encode/decode a filter into a data-nav attribute for click-through */
   function navAttr(f) {
@@ -302,8 +302,8 @@
 
   /* climb cards: Pro + Teleport shown as separate rows, each with its own tier column */
   const SHORT_L = { pro:"Pro", tp:"TP" }, LONG_L = { pro:"Pro", tp:"Teleport" };
-  function climbCardHTML(g) {
-    const c = REPORT.climb[g] || climbAgg([], g);
+  function climbCardHTML(g, data) {
+    const c = (data.climb && data.climb[g]) || climbAgg([], g);
     const prim = GM[g].primary;
     const order = prim === "pro" ? ["pro","tp"] : ["tp","pro"];   // primary shown first
     const primMain = c.main[prim], mp = pct(primMain.completed, primMain.total);
@@ -333,17 +333,20 @@
     </div>`;
   }
 
-  function render(data) {
-    REPORT = data;
-    REPORT.climb = {};
-    for (const g of ORDER) if (isClimb(g)) REPORT.climb[g] = climbAgg(data.rows, g);
-    data.all = aggregateAll(data.modes, REPORT.climb);
+  function computeDerived(data) {
+    data.climb = {};
+    for (const g of ORDER) if (isClimb(g)) data.climb[g] = climbAgg(data.rows, g);
+    data.all = aggregateAll(data.modes, data.climb);
+  }
+  function renderPanel(panel, idx) {
+    const data = panel.data;
+    computeDerived(data);
     const u = data.user, gen = new Date(data.generatedAt);
 
     let mainC=0,mainT=0,stgC=0,stgT=0,bonC=0,bonT=0,played=0,best=null;
     for (const g of ORDER) {
       if (isClimb(g)) {                              // climb counts once, by its primary style
-        const c = REPORT.climb[g], prim = GM[g].primary, pm = c.main[prim], pb = c.bonus[prim];
+        const c = data.climb[g], prim = GM[g].primary, pm = c.main[prim], pb = c.bonus[prim];
         mainC+=pm.completed; mainT+=pm.total; bonC+=pb.completed; bonT+=pb.total;
         if (pm.completed>0){ played++; const p=pct(pm.completed,pm.total); if(!best||p>best.p) best={g,p}; }
         continue;
@@ -370,7 +373,7 @@
     const headInner = (g) => `<span class="diamond"></span>
         <span class="gc-name">${escf(GM[g].name)}</span><span class="gc-cat">${escf(GM[g].cat)}</span>`;
     const cards = ORDER.map(g => {
-      if (isClimb(g)) return climbCardHTML(g);
+      if (isClimb(g)) return climbCardHTML(g, data);
       const m = data.modes[g];
       if (!m) return `<div class="gcard glass empty"><div class="gc-head">${headInner(g)}</div>
         <div class="gc-frac" style="margin-top:8px">No ranked maps</div></div>`;
@@ -405,20 +408,20 @@
       </div>`;
     })();
 
-    $("report").innerHTML = `
+    panel.root.innerHTML = `
       <div class="rep-head glass">${avatar}
         <div class="rep-who"><div class="nm">${escf(u.alias)}</div>
           <div class="sb">ID <code>${u.id}</code>${u.steamID?` &middot; Steam <code>${escf(u.steamID)}</code>`:""} &middot; ${data.scanned.toLocaleString()} completions</div>
         </div>
-        <button class="btn btn-ghost btn-sm rep-refresh" id="refreshBtn" title="Fetch only new personal bests since the last check">&#8635; Refresh</button>
+        <button class="btn btn-ghost btn-sm rep-refresh refresh-btn" title="Fetch only new personal bests since the last check">&#8635; Refresh</button>
       </div>
       <div class="kpis">${kpis.map(k=>`<div class="kpi glass ${k.nav?"lnk":""}" ${k.nav?navAttr(k.nav):""}><div class="v">${k.v}</div><div class="l">${k.l}</div></div>`).join("")}</div>
       <div class="click-hint">Tip &mdash; click any number, bar, or tier to list the maps behind it.</div>
       <div class="controls">
         <span class="cl">Tier view &mdash; tracks</span>
-        <div class="seg multi" id="segTrack"><button data-track="main" class="${TIER_TRACKS.includes("main")?"on":""}">Main</button><button data-track="bonus" class="${TIER_TRACKS.includes("bonus")?"on":""}">Bonus</button></div>
+        <div class="seg multi seg-track"><button data-track="main" class="${TIER_TRACKS.includes("main")?"on":""}">Main</button><button data-track="bonus" class="${TIER_TRACKS.includes("bonus")?"on":""}">Bonus</button></div>
         <span class="cl">ranks</span>
-        <div class="seg multi" id="segRank"><button data-rank="ranked" class="${TIER_RANKS.includes("ranked")?"on":""}">Ranked</button><button data-rank="unranked" class="${TIER_RANKS.includes("unranked")?"on":""}">Unranked</button></div>
+        <div class="seg multi seg-rank"><button data-rank="ranked" class="${TIER_RANKS.includes("ranked")?"on":""}">Ranked</button><button data-rank="unranked" class="${TIER_RANKS.includes("unranked")?"on":""}">Unranked</button></div>
       </div>
       <div class="rgrid">${cards}</div>
       ${allCard}
@@ -430,24 +433,38 @@
         Map totals are fetched live from the current map list${MAPS_FETCHED_AT ? " at " + MAPS_FETCHED_AT.toLocaleTimeString() : ""};
         completion is live as of ${gen.toLocaleString()}.</div>`;
 
-    wireMultiSeg("segTrack", TIER_TRACKS, "data-track");
-    wireMultiSeg("segRank",  TIER_RANKS,  "data-rank");
-    const rb = $("refreshBtn"); if (rb) rb.addEventListener("click", refresh);
-    renderTiers();
-    $("report").scrollIntoView({ behavior:"smooth", block:"start" });
+    wireMultiSegEl(panel.root.querySelector(".seg-track"), TIER_TRACKS, "data-track");
+    wireMultiSegEl(panel.root.querySelector(".seg-rank"),  TIER_RANKS,  "data-rank");
+    const rb = panel.root.querySelector(".refresh-btn"); if (rb) rb.addEventListener("click", () => refresh(panel));
+    renderTiers(panel.root, data);
   }
 
-  async function refresh() {
-    if (!CURRENT_USER) return;
-    const btn = $("refreshBtn"); if (btn) btn.disabled = true;
+  function renderAll() {
+    $("report").classList.toggle("comparing", PANELS.length > 1);
+    PANELS.forEach((p, i) => { if (p && p.data) renderPanel(p, i); });
+  }
+  function wireMultiSegEl(seg, arr, attr) {
+    if (!seg) return;
+    seg.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      const v = b.getAttribute(attr), i = arr.indexOf(v);
+      if (i >= 0) arr.splice(i, 1); else arr.push(v);
+      renderAll();          // re-render every panel so toggles + tiers stay in sync
+    });
+  }
+
+  async function refresh(panel) {
+    if (!panel || !panel.user) return;
+    const btn = panel.root.querySelector(".refresh-btn"); if (btn) btn.disabled = true;
     status('<span class="spin"></span>checking for new PBs&hellip;');
     try {
-      const { data, added } = await refreshReport(CURRENT_USER);
-      render(data);
-      status(added > 0 ? `Updated &mdash; ${added} new completion${added === 1 ? "" : "s"}.` : "Up to date &mdash; no new completions.");
+      const { data, added } = await refreshReport(panel.user);
+      panel.data = data;
+      renderAll();
+      const who = escf(panel.user.alias);
+      status(added > 0 ? `${who} updated &mdash; ${added} new completion${added === 1 ? "" : "s"}.` : `${who} is up to date.`);
     } catch (err) {
       status("Refresh failed: " + escf(String((err && err.message) || err)), true);
-      const b2 = $("refreshBtn"); if (b2) b2.disabled = false;
     }
   }
 
@@ -459,26 +476,26 @@
     }
     return out;
   }
-  function renderTiers() {
+  function renderTiers(root, data) {
     const trackLabel = TIER_TRACKS.length ? TIER_TRACKS.map(t => t === "main" ? "Main" : "Bonus").join(" + ") : "—";
     const rankLabel  = TIER_RANKS.length  ? TIER_RANKS.map(r => r[0].toUpperCase() + r.slice(1)).join(" + ") : "—";
-    document.querySelectorAll(".tier-h").forEach(h => {
+    root.querySelectorAll(".tier-h").forEach(h => {
       h.innerHTML = h.classList.contains("climb-th")
         ? `${trackLabel} by tier`
         : `${trackLabel} by tier &middot; <span>${rankLabel}</span>`;
     });
     const navTrack = TIER_TRACKS.length === 1 ? TIER_TRACKS[0] : "all";
-    document.querySelectorAll(".tiers").forEach(box => {
+    root.querySelectorAll(".tiers").forEach(box => {
       const g = box.getAttribute("data-mode");
       const style = box.getAttribute("data-style");   // climb columns: "pro" | "tp"
       const buckets = [];
       let emptyLabel;
       if (style) {                                     // climb column: sum selected tracks for this style
-        const c = REPORT.climb[g];
+        const c = data.climb[g];
         for (const tr of TIER_TRACKS) { const b = c && c[tr] && c[tr][style]; if (b) buckets.push(b); }
         emptyLabel = TIER_TRACKS.length ? `No ${style === "pro" ? "Pro" : "Teleport"} maps here.` : "Pick a track above.";
       } else {                                         // normal: sum selected tracks × ranks
-        const m = g === "all" ? REPORT.all : REPORT.modes[g];
+        const m = g === "all" ? data.all : data.modes[g];
         for (const tr of TIER_TRACKS) for (const rk of TIER_RANKS) { const b = m && m[tr] && m[tr][rk]; if (b) buckets.push(b); }
         emptyLabel = (TIER_TRACKS.length && TIER_RANKS.length) ? "No maps for this selection." : "Pick a track and rank above.";
       }
@@ -493,16 +510,6 @@
           <span class="tb"><i style="width:${tp.toFixed(1)}%"></i></span>
           <span class="tc"><b>${td.completed}</b>/${td.total}</span></div>`;
       }).join("");
-    });
-  }
-  function wireMultiSeg(id, arr, attr) {
-    const seg = $(id);
-    seg.addEventListener("click", e => {
-      const b = e.target.closest("button"); if (!b) return;
-      const v = b.getAttribute(attr), i = arr.indexOf(v);
-      if (i >= 0) arr.splice(i, 1); else arr.push(v);
-      b.classList.toggle("on");
-      renderTiers();
     });
   }
 
@@ -611,24 +618,52 @@
       return true;
     });
   }
+  const lbKey = r => r.mid + "|" + r.g + "|" + r.tt + "|" + r.tn + "|" + r.style;
+  const rowMeta = r => {
+    const styleTag = r.style === 8 ? " &middot; Pro" : r.style === 9 ? " &middot; TP" : "";
+    return `${escf(GM[r.g].cat)} &middot; ${TT[r.tt]}${r.tn > 1 ? " " + r.tn : ""}${r.tier != null ? " &middot; T" + r.tier : ""}${styleTag} &middot; ${r.ranked ? "ranked" : "unranked"}`;
+  };
   function renderList() {
     const f = FILTERS;
     $("drTitle").innerHTML = f.g === "all" ? "All gamemodes" : escf(GM[f.g].name);
+    const comparing = PANELS.length === 2 && PANELS[0] && PANELS[1] && PANELS[0].data && PANELS[1].data;
+    const check = ICON("check", "&#10003;");
+
+    if (comparing) {
+      const done2 = new Set();
+      for (const r of PANELS[1].data.rows) if (r.done) done2.add(lbKey(r));
+      const p1 = PANELS[0].user.alias, p2 = PANELS[1].user.alias;
+      const rows = applyFilters(PANELS[0].data.rows, f).sort((a, b) => {
+        const sa = (a.done ? 1 : 0) + (done2.has(lbKey(a)) ? 1 : 0), sb = (b.done ? 1 : 0) + (done2.has(lbKey(b)) ? 1 : 0);
+        return sa - sb || (a.g - b.g) || (a.tt - b.tt) || ((a.tier||0) - (b.tier||0)) || a.name.localeCompare(b.name);
+      });
+      const d1N = rows.filter(r => r.done).length, d2N = rows.filter(r => done2.has(lbKey(r))).length;
+      $("drCount").innerHTML =
+        `${rows.length} track${rows.length === 1 ? "" : "s"} &middot; ` +
+        `<span class="lg"><i class="dot c1"></i>${escf(p1)} <b class="c1">${d1N}</b></span>` +
+        `<span class="lg"><i class="dot c2"></i>${escf(p2)} <b class="c2">${d2N}</b></span>`;
+      if (!rows.length) { $("drList").innerHTML = `<div class="dr-empty">No maps match these filters.</div>`; return; }
+      $("drList").innerHTML = rows.map(r => {
+        const d1 = r.done, d2 = done2.has(lbKey(r));
+        return `<div class="mrow cmp">
+          <span class="mmark2"><i class="mk ${d1?"c1":""}">${d1?check:"&middot;"}</i><i class="mk ${d2?"c2":""}">${d2?check:"&middot;"}</i></span>
+          <span class="mname">${escf(r.name)}</span>
+          <span class="mmeta">${rowMeta(r)}</span></div>`;
+      }).join("");
+      return;
+    }
+
     const rows = applyFilters(REPORT.rows, f).sort((a, b) =>
       (a.done - b.done) || (a.g - b.g) || (a.tt - b.tt) || ((a.tier||0) - (b.tier||0)) || a.name.localeCompare(b.name));
     const doneN = rows.filter(r => r.done).length;
     $("drCount").innerHTML = `${rows.length} track${rows.length === 1 ? "" : "s"} &middot; <b>${doneN}</b> completed &middot; ${fp(pct(doneN, rows.length))}%`;
     if (!rows.length) { $("drList").innerHTML = `<div class="dr-empty">No maps match these filters.</div>`; return; }
-    const check = ICON("check", "&#10003;");
-    $("drList").innerHTML = rows.map(r => {
-      const styleTag = r.style === 8 ? " &middot; Pro" : r.style === 9 ? " &middot; TP" : "";
-      const meta = `${escf(GM[r.g].cat)} &middot; ${TT[r.tt]}${r.tn > 1 ? " " + r.tn : ""}${r.tier != null ? " &middot; T" + r.tier : ""}${styleTag} &middot; ${r.ranked ? "ranked" : "unranked"}`;
-      return `<div class="mrow ${r.done ? "is-done" : ""}">
+    $("drList").innerHTML = rows.map(r =>
+      `<div class="mrow ${r.done ? "is-done" : ""}">
         <span class="mmark">${r.done ? check : ""}</span>
         <span class="mname">${escf(r.name)}</span>
-        <span class="mmeta">${meta}</span>
-      </div>`;
-    }).join("");
+        <span class="mmeta">${rowMeta(r)}</span>
+      </div>`).join("");
   }
 
   /* ---------------- status + proxy UI ---------------- */
@@ -676,34 +711,69 @@
   }
 
   /* ---------------- boot ---------------- */
+  function makePanel(idx, user, data) {
+    const root = document.createElement("div");
+    root.className = "cmp-panel" + (idx === 1 ? " cmp-orange" : "");
+    return { root, user, data };
+  }
+  function lookupError(err) {
+    const m = String((err && err.message) || err);
+    if (m === "NO_PROXY") return "Set your proxy URL first.";
+    if (/HTTP 404/.test(m)) return "Player not found.";
+    if (/Failed to fetch|NetworkError|HTTP 5\d\d/.test(m)) return "Couldn't reach the proxy. Check the Worker URL is correct and deployed.";
+    return m;
+  }
+  function exitCompare() {
+    if (PANELS[1]) { PANELS[1].root.remove(); PANELS.length = 1; }
+    const f2 = $("lookup2"); if (f2) f2.style.display = "none";
+    const q2 = $("q2"); if (q2) q2.value = "";
+  }
   async function lookup(q) {
     if (!q) return;
     if (!getProxy()) { toggleSetup(true); status("Set your proxy URL first (one-time).", true); return; }
+    exitCompare();
     $("report").innerHTML = "";
     status('<span class="spin"></span>finding player&hellip;');
     try {
       const user = await resolveUser(q);
-      CURRENT_USER = user;
       const data = await compute(user);
-      status("");
-      render(data);
-    } catch (err) {
-      let m = String((err && err.message) || err);
-      if (m === "NO_PROXY") m = "Set your proxy URL first.";
-      else if (/HTTP 404/.test(m)) m = "Player not found.";
-      else if (/Failed to fetch|NetworkError|HTTP 5\d\d/.test(m))
-        m = "Couldn't reach the proxy. Check the Worker URL is correct and deployed.";
-      status(m, true);
-    }
+      PANELS = [ makePanel(0, user, data) ];
+      $("report").appendChild(PANELS[0].root);
+      status(""); renderAll();
+      $("report").scrollIntoView({ behavior:"smooth", block:"start" });
+    } catch (err) { status(lookupError(err), true); }
+  }
+  async function compareLookup(q) {
+    if (!q) return;
+    if (!PANELS[0]) { status("Look up a player first, then compare.", true); return; }
+    status('<span class="spin"></span>finding second player&hellip;');
+    try {
+      const user = await resolveUser(q);
+      const data = await compute(user);
+      PANELS[1] = makePanel(1, user, data);
+      $("report").appendChild(PANELS[1].root);
+      status(""); renderAll();
+    } catch (err) { status(lookupError(err), true); }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     renderProxyBar();
     $("lookup").addEventListener("submit", e => { e.preventDefault(); lookup($("q").value.trim()); });
     $("report").addEventListener("click", e => {
-      const el = e.target.closest("[data-nav]");
-      if (el) openDrawer(parseNav(el.getAttribute("data-nav")));
+      const el = e.target.closest("[data-nav]"); if (!el) return;
+      const panelEl = e.target.closest(".cmp-panel");
+      const panel = PANELS.find(p => p && p.root === panelEl);
+      if (panel) { REPORT = panel.data; openDrawer(parseNav(el.getAttribute("data-nav"))); }
     });
+    const cb = $("compareBtn");
+    if (cb) cb.addEventListener("click", () => {
+      if (!PANELS[0]) { status("Look up a player first, then compare.", true); return; }
+      const f2 = $("lookup2"); if (f2) { f2.style.display = "flex"; const q2 = $("q2"); if (q2) q2.focus(); }
+    });
+    const f2 = $("lookup2");
+    if (f2) f2.addEventListener("submit", e => { e.preventDefault(); compareLookup($("q2").value.trim()); });
+    const cc = $("closeCompareBtn");
+    if (cc) cc.addEventListener("click", () => { exitCompare(); renderAll(); status(""); });
     const pre = new URLSearchParams(location.search).get("u");
     if (pre) { $("q").value = pre; if (getProxy()) lookup(pre); }
   });

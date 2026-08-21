@@ -163,15 +163,39 @@
   .dr-list{flex:1 1 auto;overflow-y:auto;padding:8px 12px 48px}
   .mrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;padding:9px 12px;border-radius:8px}
   .mrow:hover{background:rgba(255,255,255,.035)}
-  .mrow:not(.is-done){opacity:.8}
+  .mrow:not(.is-done):not(.cmp){opacity:.8}
   .mmark{color:var(--accent);display:flex;justify-content:center}
   .mmark svg{width:15px;height:15px}
   .mname{font-family:'JetBrains Mono',monospace;font-size:13px;word-break:break-all}
-  .mrow:not(.is-done) .mname{color:var(--muted)}
+  .mrow:not(.is-done):not(.cmp) .mname{color:var(--muted)}
   .mmeta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b727d;text-align:right;white-space:nowrap}
   .dr-empty{padding:36px 20px;text-align:center;color:#6b727d;font-family:'JetBrains Mono',monospace;font-size:13px}
+  /* compare: two completion marks per row (P1 teal, P2 orange) */
+  .mrow.cmp{grid-template-columns:44px 1fr auto}
+  .mmark2{display:flex;gap:6px;align-items:center}
+  .mmark2 .mk{width:15px;display:flex;justify-content:center;color:#5b6675;font-size:13px}
+  .mmark2 .mk svg{width:14px;height:14px}
+  .mmark2 .mk.c1{color:var(--accent)}
+  .mmark2 .mk.c2{color:#f2a154}
+  .dr-count .lg{display:inline-flex;align-items:center;gap:5px;margin-right:12px}
+  .dr-count .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dr-count .dot.c1{background:var(--accent)}
+  .dr-count .dot.c2{background:#f2a154}
+  .dr-count b.c1{color:var(--accent)}
+  .dr-count b.c2{color:#f2a154}
+
+  /* compare panels */
+  #report.comparing{display:flex;gap:20px;align-items:flex-start}
+  #report.comparing .cmp-panel{flex:1 1 0}
+  .cmp-panel{min-width:0}
+  .cmp-orange{--accent:#f2a154;--accent-dim:#9c6535}
+  .cmp-orange .trk-top.lnk:hover,.cmp-orange .tr.lnk:hover,.cmp-orange .gc-head.lnk:hover,.cmp-orange .kpi.lnk:hover{background:rgba(242,161,84,.09)}
+  .lookup2{margin-top:12px}
+  .lookup2 .btn-primary{background:#f2a154;color:#241405}
+  .lookup2 .btn-primary:hover{box-shadow:0 0 24px rgba(242,161,84,.45)}
 
   @media(max-width:600px){ .lookup{flex-direction:column} }
+  @media(max-width:900px){ #report.comparing{flex-direction:column} }
   @media(max-width:560px){ .mmeta{display:none} }
 </style>
 </head>
@@ -211,6 +235,12 @@
     <form id="lookup" class="lookup glass reveal">
       <input id="q" type="text" placeholder="username, user ID, or SteamID64" autocomplete="off" spellcheck="false" />
       <button class="btn btn-primary" type="submit">Look up <span data-icon="arrow"></span></button>
+      <button class="btn btn-ghost" type="button" id="compareBtn">Compare</button>
+    </form>
+    <form id="lookup2" class="lookup lookup2 glass" style="display:none">
+      <input id="q2" type="text" placeholder="second player to compare&hellip;" autocomplete="off" spellcheck="false" />
+      <button class="btn btn-primary" type="submit">Add &rarr;</button>
+      <button class="btn btn-ghost" type="button" id="closeCompareBtn">Cancel</button>
     </form>
 
     <div id="proxybar" class="proxybar reveal" style="text-align:center"></div>
