@@ -26,6 +26,7 @@
 
   .setup{max-width:640px;margin:18px auto 0;border-radius:16px;padding:22px 24px}
   .setup h3{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:.04em;color:var(--accent);margin-bottom:12px}
+  .setup-note{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:10px}
   .setup ol{margin:0 0 4px 18px;color:var(--muted);font-size:13.5px;line-height:1.9}
   .setup ol a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
   .setup code{font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.05);border:1px solid var(--border);
@@ -104,6 +105,12 @@
   .allcard .gc-name{font-size:17px}
   .allcard .alltiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px 24px}
 
+  /* climb (Pro / Teleport) cards */
+  .climbcard .trk-top{grid-template-columns:88px 1fr 64px 44px}
+  .climb-tiers{margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+  .climb-col-h{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  @media(max-width:520px){ .climb-tiers{grid-template-columns:1fr} }
+
   /* clickable affordances */
   .lnk{cursor:pointer}
   .trk-top.lnk{border-radius:6px;transition:background .2s}
@@ -135,8 +142,9 @@
   .dr-filters{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:11px;flex:0 0 auto}
   .dr-field{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .dr-field>span:first-child{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);width:88px;flex:0 0 auto}
-  .dr-field select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-family:inherit;font-size:13px;padding:7px 10px;outline:none}
+  .dr-field select{background:var(--bg-2);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-family:inherit;font-size:13px;padding:7px 10px;outline:none;color-scheme:dark}
   .dr-field select:focus{border-color:var(--accent-dim)}
+  .dr-field select option{background:var(--bg-2);color:var(--fg)}
   .drseg button{padding:5px 12px}
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .chip{min-width:30px;height:30px;padding:0 6px;border:1px solid var(--border);border-radius:8px;color:var(--muted);
