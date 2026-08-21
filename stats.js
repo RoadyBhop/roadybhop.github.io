@@ -192,40 +192,69 @@
     }
     return A;
   }
-  async function compute(user) {
-    const { maps, names } = await loadMaps();
-    const { modes, lookup } = buildIndex(maps);
-    const done = new Set();
-    let scanned = 0, seen = 0;
-    for await (const page of pages(`/v1/runs?userID=${user.id}&isPB=true`)) {
-      for (const r of page.data) {
+  /* ---------------- PBs: full fetch + incremental refresh ---------------- */
+  const PBSTATE = {};   // userID -> { done:Set<key>, watermark:{createdAt,id} }
+  const isNewer = (r, wm) => r.createdAt !== wm.createdAt ? r.createdAt > wm.createdAt : r.id > wm.id;
+
+  // Fetch PBs newest-first. On refresh (prev given) stop as soon as we reach a PB we already had.
+  async function fetchDone(uid, lookup, prev) {
+    const done = prev ? new Set(prev.done) : new Set();
+    const wm = prev ? prev.watermark : null;
+    let newest = null, added = 0, seen = 0, stop = false, skip = 0; const take = 100;
+    while (!stop) {
+      const j = await apiGet(`/v1/runs?userID=${uid}&isPB=true&orderBy=createdAt&order=desc&take=${take}&skip=${skip}`);
+      const data = j.data || [];
+      if (!data.length) break;
+      for (const r of data) {
+        if (!newest) newest = { createdAt: r.createdAt, id: r.id };   // first row = newest PB
+        if (wm && !isNewer(r, wm)) { stop = true; break; }            // reached previously-fetched PBs
         seen++;
         const key = r.mapID + "|" + r.gamemode + "|" + r.trackType + "|" + r.trackNum + "|" + r.style;
-        const info = lookup.get(key);
-        if (!info) continue;                       // not a counted leaderboard (wrong style / hidden / etc.)
-        scanned++;
-        done.add(key);
-        if (r.style === 0) {                        // Normal-style modes update here; climb is derived from rows
-          const b = modes[r.gamemode] && modes[r.gamemode][TT[r.trackType]] &&
-                    modes[r.gamemode][TT[r.trackType]][info[0] === 0 ? "ranked" : "unranked"];
-          if (b) { b.completed++; if (b.tiers && info[1] != null && b.tiers[info[1]]) b.tiers[info[1]].completed++; }
-        }
+        if (lookup.has(key)) { if (!done.has(key)) added++; done.add(key); }
       }
-      status(`<span class="spin"></span>reading personal bests &mdash; ${seen}${page.total ? " / " + page.total : ""}`);
+      if (data.length < take) break;
+      skip += take;
+      status(`<span class="spin"></span>${prev ? "checking for new PBs &mdash; " + seen + " new" : "reading personal bests &mdash; " + done.size}`);
     }
-    const rows = [];
+    return { done, watermark: newest || wm, added };
+  }
+
+  // Build the report data object from the cached map list + a completed-key set.
+  function buildReport(user, maps, names, done) {
+    const key = (mid,g,tt,tn,style) => mid + "|" + g + "|" + tt + "|" + tn + "|" + style;
+    const modes = {}, rows = [];
     for (const mid in maps) {
       for (const e of maps[mid]) {
         const g = e[0], tt = e[1], tn = e[2], type = e[3], tier = e[4], style = e[5];
-        rows.push({ mid:+mid, name:names[mid], g, tt, tn, ranked:type===0, tier, style,
-                    done: done.has(mid + "|" + g + "|" + tt + "|" + tn + "|" + style) });
+        const isDone = done.has(key(mid,g,tt,tn,style));
+        rows.push({ mid:+mid, name:names[mid], g, tt, tn, ranked:type===0, tier, style, done:isDone });
+        if (style !== 0) continue;                    // modes cover Normal-style; climb derives from rows
+        if (!modes[g]) modes[g] = newMode();
+        const b = modes[g][TT[tt]][type === 0 ? "ranked" : "unranked"];
+        b.total++; if (isDone) b.completed++;
+        if (b.tiers && tier != null) { const T = (b.tiers[tier] = b.tiers[tier] || {total:0,completed:0}); T.total++; if (isDone) T.completed++; }
       }
     }
     const prof = user.profile || {};
     return {
       user: { id:user.id, alias:user.alias || ("User "+user.id), steamID:user.steamID, avatar: prof.avatarURL || null },
-      modes, rows, scanned, generatedAt: new Date().toISOString()
+      modes, rows, scanned: done.size, generatedAt: new Date().toISOString()
     };
+  }
+
+  async function compute(user) {                       // full lookup
+    const { maps, names } = await loadMaps();
+    const { lookup } = buildIndex(maps);
+    const res = await fetchDone(user.id, lookup, null);
+    PBSTATE[user.id] = { done: res.done, watermark: res.watermark };
+    return buildReport(user, maps, names, res.done);
+  }
+  async function refreshReport(user) {                 // incremental (only new PBs)
+    const { maps, names } = await loadMaps();          // cached — no network
+    const { lookup } = buildIndex(maps);
+    const res = await fetchDone(user.id, lookup, PBSTATE[user.id] || null);
+    PBSTATE[user.id] = { done: res.done, watermark: res.watermark };
+    return { data: buildReport(user, maps, names, res.done), added: res.added };
   }
 
   /* ---------------- rendering ---------------- */
@@ -233,7 +262,7 @@
   const pair = (m, tt) => (m && m[tt]) ? m[tt] : { ranked:EB, unranked:EB };
   const comb = (p) => ({ c:(p.ranked.completed||0)+(p.unranked.completed||0), t:(p.ranked.total||0)+(p.unranked.total||0) });
 
-  let REPORT = null, TIER_TRACK = "main", TIER_RANK = "ranked";
+  let REPORT = null, TIER_TRACK = "main", TIER_RANK = "ranked", CURRENT_USER = null;
 
   /* encode/decode a filter into a data-nav attribute for click-through */
   function navAttr(f) {
@@ -379,8 +408,9 @@
     $("report").innerHTML = `
       <div class="rep-head glass">${avatar}
         <div class="rep-who"><div class="nm">${escf(u.alias)}</div>
-          <div class="sb">ID <code>${u.id}</code>${u.steamID?` &middot; Steam <code>${escf(u.steamID)}</code>`:""} &middot; ${data.scanned.toLocaleString()} PBs scanned</div>
+          <div class="sb">ID <code>${u.id}</code>${u.steamID?` &middot; Steam <code>${escf(u.steamID)}</code>`:""} &middot; ${data.scanned.toLocaleString()} completions</div>
         </div>
+        <button class="btn btn-ghost btn-sm rep-refresh" id="refreshBtn" title="Fetch only new personal bests since the last check">&#8635; Refresh</button>
       </div>
       <div class="kpis">${kpis.map(k=>`<div class="kpi glass ${k.nav?"lnk":""}" ${k.nav?navAttr(k.nav):""}><div class="v">${k.v}</div><div class="l">${k.l}</div></div>`).join("")}</div>
       <div class="click-hint">Tip &mdash; click any number, bar, or tier to list the maps behind it.</div>
@@ -402,8 +432,23 @@
 
     wireSeg("segTrack", b => TIER_TRACK = b.getAttribute("data-track"));
     wireSeg("segRank",  b => TIER_RANK  = b.getAttribute("data-rank"));
+    const rb = $("refreshBtn"); if (rb) rb.addEventListener("click", refresh);
     renderTiers();
     $("report").scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+
+  async function refresh() {
+    if (!CURRENT_USER) return;
+    const btn = $("refreshBtn"); if (btn) btn.disabled = true;
+    status('<span class="spin"></span>checking for new PBs&hellip;');
+    try {
+      const { data, added } = await refreshReport(CURRENT_USER);
+      render(data);
+      status(added > 0 ? `Updated &mdash; ${added} new completion${added === 1 ? "" : "s"}.` : "Up to date &mdash; no new completions.");
+    } catch (err) {
+      status("Refresh failed: " + escf(String((err && err.message) || err)), true);
+      const b2 = $("refreshBtn"); if (b2) b2.disabled = false;
+    }
   }
 
   function renderTiers() {
@@ -625,6 +670,7 @@
     status('<span class="spin"></span>finding player&hellip;');
     try {
       const user = await resolveUser(q);
+      CURRENT_USER = user;
       const data = await compute(user);
       status("");
       render(data);
