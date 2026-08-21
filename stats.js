@@ -262,7 +262,7 @@
   const pair = (m, tt) => (m && m[tt]) ? m[tt] : { ranked:EB, unranked:EB };
   const comb = (p) => ({ c:(p.ranked.completed||0)+(p.unranked.completed||0), t:(p.ranked.total||0)+(p.unranked.total||0) });
 
-  let REPORT = null, TIER_TRACK = "main", TIER_RANK = "ranked", CURRENT_USER = null;
+  let REPORT = null, TIER_TRACKS = ["main"], TIER_RANKS = ["ranked"], CURRENT_USER = null;
 
   /* encode/decode a filter into a data-nav attribute for click-through */
   function navAttr(f) {
@@ -415,10 +415,10 @@
       <div class="kpis">${kpis.map(k=>`<div class="kpi glass ${k.nav?"lnk":""}" ${k.nav?navAttr(k.nav):""}><div class="v">${k.v}</div><div class="l">${k.l}</div></div>`).join("")}</div>
       <div class="click-hint">Tip &mdash; click any number, bar, or tier to list the maps behind it.</div>
       <div class="controls">
-        <span class="cl">Tier view &mdash; track</span>
-        <div class="seg" id="segTrack"><button data-track="main" class="on">Main</button><button data-track="bonus">Bonus</button></div>
-        <span class="cl">rank</span>
-        <div class="seg" id="segRank"><button data-rank="ranked" class="on">Ranked</button><button data-rank="unranked">Unranked</button></div>
+        <span class="cl">Tier view &mdash; tracks</span>
+        <div class="seg multi" id="segTrack"><button data-track="main" class="${TIER_TRACKS.includes("main")?"on":""}">Main</button><button data-track="bonus" class="${TIER_TRACKS.includes("bonus")?"on":""}">Bonus</button></div>
+        <span class="cl">ranks</span>
+        <div class="seg multi" id="segRank"><button data-rank="ranked" class="${TIER_RANKS.includes("ranked")?"on":""}">Ranked</button><button data-rank="unranked" class="${TIER_RANKS.includes("unranked")?"on":""}">Unranked</button></div>
       </div>
       <div class="rgrid">${cards}</div>
       ${allCard}
@@ -430,8 +430,8 @@
         Map totals are fetched live from the current map list${MAPS_FETCHED_AT ? " at " + MAPS_FETCHED_AT.toLocaleTimeString() : ""};
         completion is live as of ${gen.toLocaleString()}.</div>`;
 
-    wireSeg("segTrack", b => TIER_TRACK = b.getAttribute("data-track"));
-    wireSeg("segRank",  b => TIER_RANK  = b.getAttribute("data-rank"));
+    wireMultiSeg("segTrack", TIER_TRACKS, "data-track");
+    wireMultiSeg("segRank",  TIER_RANKS,  "data-rank");
     const rb = $("refreshBtn"); if (rb) rb.addEventListener("click", refresh);
     renderTiers();
     $("report").scrollIntoView({ behavior:"smooth", block:"start" });
@@ -451,45 +451,58 @@
     }
   }
 
+  function sumTiers(buckets) {
+    const out = {};
+    for (const b of buckets) {
+      if (!b || !b.tiers) continue;
+      for (const t in b.tiers) { const T = (out[t] = out[t] || {total:0,completed:0}); T.total += b.tiers[t].total; T.completed += b.tiers[t].completed; }
+    }
+    return out;
+  }
   function renderTiers() {
-    const trackLabel = TIER_TRACK === "main" ? "Main tracks" : "Bonuses";
-    const rankLabel = TIER_RANK[0].toUpperCase() + TIER_RANK.slice(1);
+    const trackLabel = TIER_TRACKS.length ? TIER_TRACKS.map(t => t === "main" ? "Main" : "Bonus").join(" + ") : "—";
+    const rankLabel  = TIER_RANKS.length  ? TIER_RANKS.map(r => r[0].toUpperCase() + r.slice(1)).join(" + ") : "—";
     document.querySelectorAll(".tier-h").forEach(h => {
       h.innerHTML = h.classList.contains("climb-th")
         ? `${trackLabel} by tier`
         : `${trackLabel} by tier &middot; <span>${rankLabel}</span>`;
     });
+    const navTrack = TIER_TRACKS.length === 1 ? TIER_TRACKS[0] : "all";
     document.querySelectorAll(".tiers").forEach(box => {
       const g = box.getAttribute("data-mode");
       const style = box.getAttribute("data-style");   // climb columns: "pro" | "tp"
-      let bucket, emptyLabel;
-      if (style) {
+      const buckets = [];
+      let emptyLabel;
+      if (style) {                                     // climb column: sum selected tracks for this style
         const c = REPORT.climb[g];
-        bucket = c && c[TIER_TRACK] && c[TIER_TRACK][style];
-        emptyLabel = `No ${style === "pro" ? "Pro" : "Teleport"} ${trackLabel.toLowerCase()}.`;
-      } else {
+        for (const tr of TIER_TRACKS) { const b = c && c[tr] && c[tr][style]; if (b) buckets.push(b); }
+        emptyLabel = TIER_TRACKS.length ? `No ${style === "pro" ? "Pro" : "Teleport"} maps here.` : "Pick a track above.";
+      } else {                                         // normal: sum selected tracks × ranks
         const m = g === "all" ? REPORT.all : REPORT.modes[g];
-        bucket = m && m[TIER_TRACK] && m[TIER_TRACK][TIER_RANK];
-        emptyLabel = `No ${TIER_RANK} ${trackLabel.toLowerCase()}.`;
+        for (const tr of TIER_TRACKS) for (const rk of TIER_RANKS) { const b = m && m[tr] && m[tr][rk]; if (b) buckets.push(b); }
+        emptyLabel = (TIER_TRACKS.length && TIER_RANKS.length) ? "No maps for this selection." : "Pick a track and rank above.";
       }
-      const tiers = (bucket && bucket.tiers) || {};
+      const tiers = sumTiers(buckets);
       const keys = Object.keys(tiers).map(Number).sort((a,b)=>a-b);
       if (!keys.length) { box.innerHTML = `<div class="tempty">${emptyLabel}</div>`; return; }
+      const navRank = style ? "all" : (TIER_RANKS.length === 1 ? TIER_RANKS[0] : "all");
       box.innerHTML = keys.map(t => {
         const td = tiers[t], tp = pct(td.completed, td.total), z = td.completed === 0 ? " z" : "";
-        const nav = navAttr({ g, track:TIER_TRACK, rank: style ? "all" : TIER_RANK, tiers:[t], done:"all", style: style || "all" });
+        const nav = navAttr({ g, track:navTrack, rank:navRank, tiers:[t], done:"all", style: style || "all" });
         return `<div class="tr${z} lnk" ${nav}><span class="tl">Tier ${t}</span>
           <span class="tb"><i style="width:${tp.toFixed(1)}%"></i></span>
           <span class="tc"><b>${td.completed}</b>/${td.total}</span></div>`;
       }).join("");
     });
   }
-  function wireSeg(id, apply) {
+  function wireMultiSeg(id, arr, attr) {
     const seg = $(id);
     seg.addEventListener("click", e => {
       const b = e.target.closest("button"); if (!b) return;
-      seg.querySelectorAll("button").forEach(x => x.classList.remove("on"));
-      b.classList.add("on"); apply(b); renderTiers();
+      const v = b.getAttribute(attr), i = arr.indexOf(v);
+      if (i >= 0) arr.splice(i, 1); else arr.push(v);
+      b.classList.toggle("on");
+      renderTiers();
     });
   }
 
